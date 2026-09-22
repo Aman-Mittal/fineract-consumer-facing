@@ -20,6 +20,7 @@
 import { Injectable } from '@angular/core';
 import { AuditEventCommandRequest, SubmitAuditEventsCommandRequest } from '@bff/client';
 import { deviceFingerprint } from '../auth/device-fingerprint';
+import { generateCorrelationId } from '../interceptors/correlation-id.interceptor';
 
 export const AUDIT_EVENTS_PATH = '/api/v1/audit/events';
 
@@ -77,6 +78,7 @@ export class AuditService {
       headers: {
         'Content-Type': 'application/json',
         'X-Device-Fingerprint': deviceFingerprint(),
+        'X-Correlation-ID': generateCorrelationId(),
       },
       body: JSON.stringify(body),
     })

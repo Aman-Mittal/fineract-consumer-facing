@@ -30,6 +30,7 @@ import org.apache.fineract.consumer.infrastructure.access.service.AccessPolicyEv
 import org.apache.fineract.consumer.infrastructure.audit.data.TransactionalAuditEvent;
 import org.apache.fineract.consumer.infrastructure.audit.data.AuditEventType;
 import org.apache.fineract.consumer.infrastructure.audit.data.NonTransactionalAuditEvent;
+import org.apache.fineract.consumer.infrastructure.correlation.service.CorrelationIdHolder;
 import org.apache.fineract.consumer.infrastructure.jwt.data.IssuedJwt;
 import org.apache.fineract.consumer.infrastructure.stepup.data.StepUpConstants;
 import org.apache.fineract.consumer.infrastructure.web.service.EmailMaskingService;
@@ -156,11 +157,12 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public void forgotPassword(ForgotPasswordCommand command) {
         log.info("password.forgot.requested");
+        String correlationId = CorrelationIdHolder.getCurrentCorrelationId();
         repository.findByEmail(command.getEmail()).ifPresent(user -> applicationTaskExecutor.execute(() -> {
             try {
                 sendOtp(user);
                 eventPublisher.publishEvent(NonTransactionalAuditEvent.of(AuditEventType.PASSWORD_CHANGE_INITIATED,
-                        user.getId(), false, null, Map.of(DETAIL_FLOW, FLOW_RESET)));
+                        user.getId(), false, null, Map.of(DETAIL_FLOW, FLOW_RESET), correlationId));
             } catch (RuntimeException e) {
                 log.error("password.forgot otp delivery failed for user {}", user.getPublicId(), e);
             }
