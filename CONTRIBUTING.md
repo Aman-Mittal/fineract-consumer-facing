@@ -123,6 +123,18 @@ Every source file (Java, TypeScript, YAML, `.feature`, scripts) carries the Apac
 license header in the appropriate comment syntax. The Apache RAT CI check fails
 without it.
 
+## AI-assisted contributions
+
+Generative AI tools may assist with contribution work, but they do not replace contributor
+accountability. The human submitting a change is responsible for its correctness, security,
+performance, maintainability, and for having the rights needed to contribute it to the ASF.
+
+Follow the ASF's [Generative Tooling Guidance](https://www.apache.org/legal/generative-tooling.html),
+including its guidance on third-party material and tool terms. Contributors are encouraged, but not
+required, to disclose material AI assistance in a pull request or commit message. A useful disclosure
+names the tool or model and the harness or workflow used. Disclosure does not transfer responsibility
+away from the contributor.
+
 ## Before you push
 
 CI gates every pull request on:
