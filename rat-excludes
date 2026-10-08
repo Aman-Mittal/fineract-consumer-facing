@@ -9,6 +9,7 @@ consumer/gradle/wrapper/**
 rat-excludes
 LICENSE
 SECURITY.md
+AGENTS.md
 *.jar
 **/.nvmrc
 **/.prettierignore
