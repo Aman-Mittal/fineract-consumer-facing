@@ -352,7 +352,7 @@ public class FineractSeeder {
             if (cachedClosureReasonCodeValueId != null) {
                 return cachedClosureReasonCodeValueId;
             }
-            long codeId = findIdByName(CODES.retrieveCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
+            long codeId = findIdByName(CODES.retrieveAllCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
                     CLIENT_CLOSURE_REASON_CODE);
             long reasonId = CODE_VALUES.retrieveAllCodeValues(codeId).stream()
                     .map(GetCodeValuesDataResponse::getId)
@@ -383,7 +383,7 @@ public class FineractSeeder {
             if (cachedPassportCodeValueId != null) {
                 return cachedPassportCodeValueId;
             }
-            long codeId = findIdByName(CODES.retrieveCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
+            long codeId = findIdByName(CODES.retrieveAllCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
                     CUSTOMER_IDENTIFIER_CODE);
             long passportId = findIdByName(CODE_VALUES.retrieveAllCodeValues(codeId),
                     GetCodeValuesDataResponse::getName, GetCodeValuesDataResponse::getId, PASSPORT_DOCUMENT_TYPE);
