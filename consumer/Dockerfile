@@ -30,4 +30,7 @@ FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Size the heap from the container memory limit instead of a fixed -Xmx, so the same image runs in 512 MB and
+# uses more when the limit is raised. The JVM picks SerialGC below ~1.8 GB and G1 above it on its own.
+# ExitOnOutOfMemoryError lets the orchestrator restart a wedged instance instead of leaving it half alive.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=60", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"]
