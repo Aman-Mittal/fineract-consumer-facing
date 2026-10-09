@@ -161,12 +161,12 @@ class TransfersQueryServiceImplTest {
     }
 
     private void givenTransferDestinationType(Long transferId, Long accountTypeId) {
-        when(accountTransfersApi.retrieveOne6(transferId)).thenReturn(new GetAccountTransfersPageItems()
+        when(accountTransfersApi.retrieveOneAccountTransfer(transferId)).thenReturn(new GetAccountTransfersPageItems()
                 .toAccountType(new GetAccountTransfersPageItemsToAccountType().id(accountTypeId)));
     }
 
     private void givenTransferDestinationAccount(Long transferId, Long destinationAccountNo) {
-        when(accountTransfersApi.retrieveOne6(transferId)).thenReturn(new GetAccountTransfersPageItems()
+        when(accountTransfersApi.retrieveOneAccountTransfer(transferId)).thenReturn(new GetAccountTransfersPageItems()
                 .toAccountType(new GetAccountTransfersPageItemsToAccountType().id(SAVINGS_ACCOUNT_TYPE_ID))
                 .toAccount(new GetAccountTransfersPageItemsFromAccount().accountNo(destinationAccountNo)));
     }
@@ -218,7 +218,7 @@ class TransfersQueryServiceImplTest {
         givenTransferDestinationType(TRANSFER_ID, LOAN_ACCOUNT_TYPE_ID);
 
         assertThat(service.listTransfers(jwt, query(0, 20, null, null)).getContent()).isEmpty();
-        verify(accountTransfersApi).retrieveOne6(TRANSFER_ID);
+        verify(accountTransfersApi).retrieveOneAccountTransfer(TRANSFER_ID);
     }
 
     @Test
@@ -235,7 +235,7 @@ class TransfersQueryServiceImplTest {
         assertThat(result.get(0).getFromAccount()).isEqualTo(ACCOUNT_A_NO);
         assertThat(result.get(0).getToAccount()).isEqualTo(BENEFICIARY_ACCOUNT_NO_PADDED);
         assertThat(result.get(0).getDirection()).isEqualTo(TransferDirection.OUTGOING);
-        verify(accountTransfersApi).retrieveOne6(TRANSFER_ID);
+        verify(accountTransfersApi).retrieveOneAccountTransfer(TRANSFER_ID);
     }
 
     @Test
@@ -274,7 +274,7 @@ class TransfersQueryServiceImplTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTransferId()).isEqualTo(TRANSFER_ID);
-        verify(accountTransfersApi, never()).retrieveOne6(any());
+        verify(accountTransfersApi, never()).retrieveOneAccountTransfer(any());
     }
 
     @Test

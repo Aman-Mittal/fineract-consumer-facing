@@ -65,7 +65,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
-import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class SavingsQueryServiceImplTest {
@@ -103,9 +102,6 @@ class SavingsQueryServiceImplTest {
 
     @Mock
     private UserClientResolver userClientResolver;
-
-    @Mock
-    private ObjectMapper objectMapper;
 
     @InjectMocks
     private SavingsQueryServiceImpl service;
@@ -209,10 +205,7 @@ class SavingsQueryServiceImplTest {
     @Test
     void getTransactionMapsCurrency() {
         Jwt jwt = jwt();
-        String json = "{}";
         when(savingsAccountTransactionsApi.retrieveOneSavingsAccountTransaction(SAVINGS_ID, TRANSACTION_ID))
-                .thenReturn(json);
-        when(objectMapper.readValue(json, SavingsAccountTransactionData.class))
                 .thenReturn(new SavingsAccountTransactionData()
                         .id(TRANSACTION_ID)
                         .currency(new CurrencyData().code(CURRENCY_CODE)));
@@ -227,11 +220,11 @@ class SavingsQueryServiceImplTest {
     void searchTransactionsSplitsSortIntoOrderByAndSortOrder() {
         Jwt jwt = jwt();
         SavingsAccountTransactionsSearchResponse response = new SavingsAccountTransactionsSearchResponse()
-                .content(Set.of(new GetSavingsAccountTransactionsPageItem()
+                .content(List.of(new GetSavingsAccountTransactionsPageItem()
                         .id(1L)
                         .currency(new GetTransactionsCurrency().code(CURRENCY_CODE))))
                 .total(TOTAL_ELEMENTS);
-        when(savingsAccountTransactionsApi.searchTransactions(
+        when(savingsAccountTransactionsApi.searchSavingsAccountTransactions(
                 SAVINGS_ID, null, null, null, null, null, null, null, null, null,
                 0, SIZE, SORT_BY_AMOUNT, SORT_ORDER_DESC, LOCALE, DATE_FORMAT))
                 .thenReturn(response);
@@ -256,11 +249,11 @@ class SavingsQueryServiceImplTest {
     @Test
     void searchTransactionsPassesBareSortAsOrderByOnly() {
         Jwt jwt = jwt();
-        when(savingsAccountTransactionsApi.searchTransactions(
+        when(savingsAccountTransactionsApi.searchSavingsAccountTransactions(
                 SAVINGS_ID, null, null, null, null, null, null, null, null, null,
                 0, SIZE, SORT_BY_AMOUNT, null, LOCALE, DATE_FORMAT))
                 .thenReturn(new SavingsAccountTransactionsSearchResponse()
-                        .content(Set.of(new GetSavingsAccountTransactionsPageItem().id(1L)))
+                        .content(List.of(new GetSavingsAccountTransactionsPageItem().id(1L)))
                         .total(1L));
 
         SavingsTransactionQueryResponse result = service.searchTransactions(jwt, SavingsTransactionSearchQuery.builder()
@@ -277,7 +270,7 @@ class SavingsQueryServiceImplTest {
     @Test
     void searchTransactionsEmptyEnvelopeWhenNullContent() {
         Jwt jwt = jwt();
-        when(savingsAccountTransactionsApi.searchTransactions(
+        when(savingsAccountTransactionsApi.searchSavingsAccountTransactions(
                 SAVINGS_ID, null, null, null, null, null, null, null, null, null,
                 0, SIZE, null, null, LOCALE, DATE_FORMAT))
                 .thenReturn(new SavingsAccountTransactionsSearchResponse());

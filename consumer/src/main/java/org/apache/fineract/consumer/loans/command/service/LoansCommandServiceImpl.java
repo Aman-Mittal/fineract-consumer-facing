@@ -69,7 +69,7 @@ public class LoansCommandServiceImpl implements LoansCommandService {
         Long clientId = resolveClientId(jwt);
         PostLoansRequest request = buildSubmitRequest(command, clientId);
         PostLoansResponse response = callWithIdempotency(jwt, command.getIdempotencyKey(),
-                () -> loansApi.calculateLoanScheduleOrSubmitLoanApplication(request, null));
+                () -> loansApi.calculateOrSubmitLoanApplication(request, null));
         ownedAccountsCache.evict(clientId);
         return LoanApplicationCommandData.builder()
                 .loanId(response.getLoanId())
@@ -85,7 +85,7 @@ public class LoansCommandServiceImpl implements LoansCommandService {
         Long clientId = resolveClientId(jwt);
         PutLoansLoanIdRequest request = buildModifyRequest(command);
         PutLoansLoanIdResponse response = callWithIdempotency(jwt, command.getIdempotencyKey(),
-                () -> loansApi.modifyLoanApplication(command.getLoanId(), request, null));
+                () -> loansApi.updateLoanApplication(command.getLoanId(), request, null));
         return LoanApplicationCommandData.builder()
                 .loanId(command.getLoanId())
                 .resourceId(response.getResourceId())
@@ -103,7 +103,7 @@ public class LoansCommandServiceImpl implements LoansCommandService {
                 .dateFormat(DATE_FORMAT)
                 .locale(LOCALE);
         PostLoansLoanIdResponse response = callWithIdempotency(jwt, command.getIdempotencyKey(),
-                () -> loansApi.stateTransitions(command.getLoanId(), request, WITHDRAW_COMMAND));
+                () -> loansApi.handleCommandsLoan(command.getLoanId(), request, WITHDRAW_COMMAND));
         return LoanApplicationCommandData.builder()
                 .loanId(command.getLoanId())
                 .resourceId(response.getResourceId())

@@ -247,14 +247,14 @@ public class FineractSeeder {
                 .loanType(LOAN_TYPE_INDIVIDUAL)
                 .locale(LOCALE)
                 .dateFormat(DATE_FORMAT);
-        long loanId = LOANS.calculateLoanScheduleOrSubmitLoanApplication(submit, null).getLoanId();
-        LOANS.stateTransitions(loanId,
+        long loanId = LOANS.calculateOrSubmitLoanApplication(submit, null).getLoanId();
+        LOANS.handleCommandsLoan(loanId,
                 new PostLoansLoanIdRequest()
                         .approvedOnDate(FIXED_DATE)
                         .locale(LOCALE)
                         .dateFormat(DATE_FORMAT),
                 APPROVE_COMMAND);
-        LOANS.stateTransitions(loanId,
+        LOANS.handleCommandsLoan(loanId,
                 new PostLoansLoanIdRequest()
                         .actualDisbursementDate(FIXED_DATE)
                         .locale(LOCALE)
@@ -352,7 +352,7 @@ public class FineractSeeder {
             if (cachedClosureReasonCodeValueId != null) {
                 return cachedClosureReasonCodeValueId;
             }
-            long codeId = findIdByName(CODES.retrieveCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
+            long codeId = findIdByName(CODES.retrieveAllCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
                     CLIENT_CLOSURE_REASON_CODE);
             long reasonId = CODE_VALUES.retrieveAllCodeValues(codeId).stream()
                     .map(GetCodeValuesDataResponse::getId)
@@ -383,7 +383,7 @@ public class FineractSeeder {
             if (cachedPassportCodeValueId != null) {
                 return cachedPassportCodeValueId;
             }
-            long codeId = findIdByName(CODES.retrieveCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
+            long codeId = findIdByName(CODES.retrieveAllCodes(), GetCodesResponse::getName, GetCodesResponse::getId,
                     CUSTOMER_IDENTIFIER_CODE);
             long passportId = findIdByName(CODE_VALUES.retrieveAllCodeValues(codeId),
                     GetCodeValuesDataResponse::getName, GetCodeValuesDataResponse::getId, PASSPORT_DOCUMENT_TYPE);

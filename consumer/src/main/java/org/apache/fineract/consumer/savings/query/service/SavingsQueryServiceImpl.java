@@ -57,8 +57,6 @@ import org.apache.fineract.consumer.savings.query.exception.SavingsRequestInvali
 import org.apache.fineract.consumer.savings.query.exception.SavingsUpstreamUnavailableException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +72,6 @@ public class SavingsQueryServiceImpl implements SavingsQueryService {
     private final ClientApi clientApi;
     private final AccessPolicyEvaluator accessPolicyEvaluator;
     private final UserClientResolver userClientResolver;
-    private final ObjectMapper objectMapper;
 
     @Override
     public List<SavingsAccountListItemQueryData> listAccounts(Jwt jwt) {
@@ -115,9 +112,8 @@ public class SavingsQueryServiceImpl implements SavingsQueryService {
         Integer offset = query.getPage() * query.getSize();
         String orderBy = orderByOf(query.getSort());
         String sortOrder = sortOrderOf(query.getSort());
-        // TODO: Fix Fineract's GET /savingsaccounts/{id}/transactions/{txnId} endpoint to return an object, not a string, then refactor
         SavingsAccountTransactionsSearchResponse response = fetch(() ->
-                savingsAccountTransactionsApi.searchTransactions(
+                savingsAccountTransactionsApi.searchSavingsAccountTransactions(
                         query.getSavingsId(),
                         isoDate(query.getFromDate()),
                         isoDate(query.getToDate()),
@@ -140,9 +136,9 @@ public class SavingsQueryServiceImpl implements SavingsQueryService {
     public SavingsTransactionQueryData getTransaction(Jwt jwt, Long savingsId, Long transactionId) {
         accessPolicyEvaluator.authorize(jwt, ConsumerAction.SAVINGS_VIEW, savingsId,
                 SavingsQueryAccessDeniedException::new);
-        String json = fetch(() ->
+        SavingsAccountTransactionData transaction = fetch(() ->
                 savingsAccountTransactionsApi.retrieveOneSavingsAccountTransaction(savingsId, transactionId));
-        return toTransactionData(deserialize(json));
+        return toTransactionData(transaction);
     }
 
     @Override
@@ -170,13 +166,6 @@ public class SavingsQueryServiceImpl implements SavingsQueryService {
                 SavingsUpstreamUnavailableException::new);
     }
 
-    private SavingsAccountTransactionData deserialize(String json) {
-        try {
-            return objectMapper.readValue(json, SavingsAccountTransactionData.class);
-        } catch (JacksonException e) {
-            throw new SavingsUpstreamUnavailableException(e);
-        }
-    }
 
     private SavingsAccountListItemQueryData toListItem(GetClientsSavingsAccounts account) {
         return SavingsAccountListItemQueryData.builder()
