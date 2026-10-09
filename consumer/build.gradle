@@ -329,10 +329,80 @@ def fixClientImageResponseShape(paths) {
 	]]
 }
 
+// Fineract code generation is scoped to the APIs the BFF and the Cucumber seeder call. Generating the
+// whole spec (~150 tags) put ~1,500 models and ~140 unused Feign clients in the jar, each one a bean
+// with its own child context at startup. Add a tag here before using a new generated *Api.
+def fineractApiTags = [
+	'Account Transfers', 'Client', 'Client Charges', 'Client Identifier', 'Guarantors',
+	'Loan Charges', 'Loan Products', 'Loan Transactions', 'Loans',
+	'Savings Account', 'Savings Account Transactions', 'Savings Charges', 'Savings Product', 'Search API',
+	// Cucumber seeder only
+	'Code Values', 'Codes', 'Currency'
+] as Set
+// Untagged operations are generated into DefaultApi; keep only the ones called.
+def fineractUntaggedOperationIds = ['retrieveImage'] as Set
+
+def pruneToUsedFineractApis(spec, Set tags, Set untaggedOperationIds) {
+	def httpMethods = ['get', 'put', 'post', 'delete', 'patch', 'head', 'options', 'trace'] as Set
+	def foundTags = [] as Set
+	def foundUntagged = [] as Set
+	spec.paths.each { path, item ->
+		item.keySet().findAll { it in httpMethods }.toList().each { method ->
+			def op = item[method]
+			def opTags = op.tags ?: []
+			boolean keep = opTags ? opTags.any { it in tags } : (op.operationId in untaggedOperationIds)
+			if (!keep) {
+				item.remove(method)
+			} else if (opTags) {
+				foundTags.addAll(opTags.findAll { it in tags })
+			} else {
+				foundUntagged << op.operationId
+			}
+		}
+	}
+	def missing = (tags - foundTags) + (untaggedOperationIds - foundUntagged)
+	if (missing) {
+		throw new GradleException("Fineract spec no longer has $missing — revisit fineractApiTags / fineractUntaggedOperationIds")
+	}
+	spec.paths.keySet().removeAll { !spec.paths[it].keySet().any { m -> m in httpMethods } }
+
+	// Keep only the components reachable from the remaining operations.
+	def reachable = [] as Set
+	def pending = new ArrayDeque<Object>()
+	pending.add(spec.paths)
+	while (!pending.isEmpty()) {
+		def node = pending.poll()
+		if (node instanceof Map) {
+			def ref = node['$ref']
+			if (ref instanceof String && ref.startsWith('#/components/')) {
+				def key = ref.substring('#/components/'.length())
+				if (reachable.add(key)) {
+					def parts = key.split('/', 2)
+					def target = spec.components[parts[0]]?.get(parts[1])
+					if (target != null) {
+						pending.add(target)
+					}
+				}
+			}
+			node.values().findAll { it != null }.each { pending.add(it) }
+		} else if (node instanceof List) {
+			node.findAll { it != null }.each { pending.add(it) }
+		}
+	}
+	spec.components.each { type, entries ->
+		if (type != 'securitySchemes' && entries instanceof Map) {
+			entries.keySet().retainAll { "$type/$it".toString() in reachable }
+		}
+	}
+	spec.tags?.removeAll { !(it.name in tags) }
+}
+
 task sanitizeFineractSpec {
-	description = 'Strip null-only enums and retype integer money fields in the vendored Fineract spec before code generation.'
+	description = 'Patch known defects in the vendored Fineract spec and prune it to the APIs in use before code generation.'
 	group = 'documentation'
 	inputs.file fineractRawSpec
+	inputs.property "fineractApiTags", fineractApiTags.sort()
+	inputs.property "fineractUntaggedOperationIds", fineractUntaggedOperationIds.sort()
 	outputs.file fineractSanitizedSpec
 	doLast {
 		def spec = new JsonSlurper().parse(fineractRawSpec)
@@ -342,13 +412,14 @@ task sanitizeFineractSpec {
 		addMissingClientProfileFields(spec.components.schemas)
 		fixObligeeDetailsResponseShape(spec.paths)
 		fixClientImageResponseShape(spec.paths)
+		pruneToUsedFineractApis(spec, fineractApiTags, fineractUntaggedOperationIds)
 		fineractSanitizedSpec.parentFile.mkdirs()
 		fineractSanitizedSpec.text = JsonOutput.toJson(spec)
 	}
 }
 
 task generateFineractClient(type: GenerateTask) {
-	description = 'Generate Spring Cloud Feign client for Fineract Core (full surface).'
+	description = 'Generate Spring Cloud Feign client for the Fineract Core APIs listed in fineractApiTags.'
 	group = 'documentation'
 	generatorName  = 'spring'
 	library        = 'spring-cloud'
