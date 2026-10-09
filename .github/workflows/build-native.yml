@@ -1,0 +1,110 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Consumer App Native Image
+
+on:
+  push:
+    paths:
+      - 'consumer/**'
+      - '.github/workflows/build-native.yml'
+  pull_request:
+    paths:
+      - 'consumer/**'
+      - '.github/workflows/build-native.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: consumer
+
+jobs:
+  native:
+    name: Native image build and Cucumber
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up GraalVM 25
+        uses: graalvm/setup-graalvm@27b360dbb857524eaf0b4c4cef364d38e5b4f173 # v1.6.7
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+
+      - name: Setup Gradle and Validate Wrapper
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          validate-wrappers: true
+
+      - name: Generate dev JWT signing key
+        run: ./scripts/generate-dev-jwt-key.sh
+
+      - name: Pre-create JaCoCo mount directories
+        run: mkdir -p build/jacoco-agent build/jacoco
+
+      # Compile before starting the stack: native-image peaks around 10 GiB and Fineract alone takes 2 GiB.
+      - name: Compile native image
+        run: ./gradlew --no-daemon -Pnative nativeCompile
+
+      - name: Start application stack with the native BFF
+        run: docker compose -f compose.yaml -f compose.native.yaml up -d --build --wait --wait-timeout 300
+
+      - name: Capture OpenAPI spec and generate the test client
+        run: ./gradlew --no-daemon openapi generateJavaClient
+
+      - name: Run Cucumber tests against the native BFF
+        run: ./gradlew --no-daemon cucumber
+
+      - name: Record native footprint
+        if: success()
+        run: |
+          {
+            echo "### Native BFF"
+            echo
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Binary size | $(du -h build/native/nativeCompile/consumer | cut -f1) |"
+            echo "| Startup | $(docker compose logs bff | grep -o 'Started ConsumerApplication in [0-9.]* seconds' | tail -1 | grep -o '[0-9.]* seconds') |"
+            echo "| Memory after the Cucumber suite | $(docker stats --no-stream --format '{{.MemUsage}}' bff) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose -f compose.yaml -f compose.native.yaml logs --no-color
+
+      - name: Tear down application stack
+        if: always()
+        run: docker compose -f compose.yaml -f compose.native.yaml down -v
+
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-test-results
+          path: 'consumer/**/build/reports/'
+          retention-days: 5

@@ -26,6 +26,7 @@ plugins {
 	id 'java'
 	id 'jacoco'
 	id 'org.springframework.boot' version '4.0.6'
+	id 'org.graalvm.buildtools.native' version '0.11.5' apply false
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'se.thinkcode.cucumber-runner' version '0.0.14'
 	id 'org.openapi.generator' version '7.14.0'
@@ -45,6 +46,27 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+// Native image: ./gradlew -Pnative nativeCompile (needs a GraalVM 25 JDK; peak build memory ~9 GiB).
+// Applied only on request because the plugin makes every bootJar and test run Spring AOT processing.
+// See docs/consumer/development/native-image.adoc.
+if (project.hasProperty('native')) {
+	apply plugin: 'org.graalvm.buildtools.native'
+	graalvmNative {
+		// Most unit tests use Mockito, which cannot run in a native image. The native build is verified by
+		// running the Cucumber suite against the native container instead (compose.native.yaml).
+		testSupport = false
+		binaries {
+			main {
+				imageName = 'consumer'
+				buildArgs.add('-H:+ReportExceptionStackTraces')
+				// Actuator's Micrometer binders (Tomcat, JVM) use the platform MBean server, whose MXBeans need
+				// JMX metadata in the image. This does not open a remote JMX port.
+				buildArgs.add('--enable-monitoring=jmxserver')
+			}
+		}
+	}
 }
 
 ext {

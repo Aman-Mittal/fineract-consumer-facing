@@ -19,12 +19,15 @@
 
 package org.apache.fineract.consumer;
 
+import org.apache.fineract.consumer.infrastructure.configs.NativeRuntimeHints;
 import org.apache.fineract.consumer.infrastructure.fineractclient.configs.FineractFeignConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ImportRuntimeHints;
 
 @SpringBootApplication
+@ImportRuntimeHints(NativeRuntimeHints.class)
 @EnableFeignClients(basePackages = "org.apache.fineract.consumer", defaultConfiguration = FineractFeignConfig.class)
 public class ConsumerApplication {
 

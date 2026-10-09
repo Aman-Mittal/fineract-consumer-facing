@@ -1,0 +1,85 @@
+= Native Image
+
+The BFF can be compiled ahead of time into a GraalVM native executable. The native build starts in well under a second and runs the full Cucumber suite in under 100 MiB, against roughly ten seconds and 750 MiB for the JVM jar. The JVM jar stays the default artifact; the native build is opt-in.
+
+== Building
+
+Native compilation needs a GraalVM 25 JDK (for example `sdk install java 25.0.4-graalce`) and about 10 GiB of free memory. It takes about two and a half minutes on a 22-core machine; on a 4-core CI runner expect 10 to 15 minutes.
+
+[source,bash]
+----
+cd consumer
+./gradlew -Pnative nativeCompile
+----
+
+The binary and the shared libraries emitted beside it land in `consumer/build/native/nativeCompile/`. Without `-Pnative` the GraalVM plugin is not applied, so ordinary `bootJar` and `test` runs do no AOT processing.
+
+Compile on the host, not inside Docker: Docker Desktop's VM usually has less memory than the build needs. `consumer/Dockerfile.native` therefore only packages the prebuilt binary (its build context is limited to `build/native/nativeCompile` by `Dockerfile.native.dockerignore`) on `ubuntu:24.04`, whose glibc matches the `ubuntu-24.04` build hosts.
+
+== Running and testing
+
+`consumer/compose.native.yaml` swaps the `bff` service for the native image. The rest of the stack is unchanged, so the Cucumber suite runs against it as is:
+
+[source,bash]
+----
+cd consumer
+./gradlew -Pnative nativeCompile
+docker compose -f compose.yaml -f compose.native.yaml up -d --build --wait
+./gradlew openapi generateJavaClient
+./gradlew cucumber
+docker compose -f compose.yaml -f compose.native.yaml down -v
+----
+
+This is the native build's functional test. Native-only unit tests are not run (`graalvmNative.testSupport = false`) because most unit tests use Mockito, which cannot run in a native image. CI runs the sequence above in `.github/workflows/build-native.yml`. Code coverage comes from the JVM run; the JaCoCo agent cannot attach to a native executable.
+
+The image sizes its heap from the container limit (`-XX:MaximumHeapSizePercent=60`, the native-image counterpart of the JVM image's `MaxRAMPercentage`) and exits on `OutOfMemoryError`.
+
+== Footprint
+
+Measured with the full Cucumber suite (77 scenarios) against the compose stack. Memory is the container's `docker stats` usage.
+
+[cols="2,1,1,1,1"]
+|===
+|Build |Container limit |Startup |Idle |Peak during suite
+
+|JVM jar (`-Xmx768m`)
+|2 GB
+|9.7 s
+|726 MiB
+|846 MiB
+
+|Native
+|512 MB
+|0.6 s
+|94 MiB
+|120 MiB
+
+|Native
+|256 MB
+|0.6 s
+|64 MiB
+|83 MiB
+|===
+
+The native binary is about 220 MiB.
+
+== Keeping the native build working
+
+AOT fixes some decisions at build time that the JVM makes at startup. Code that works on the JVM can therefore break only in the native image:
+
+* *Bean conditions are evaluated at build time.* `@ConditionalOnProperty`, `@Profile` and similar conditions see the build environment, not the deployment's. Read per-deployment switches at runtime instead, as `AuditQueryServiceImpl` does for `consumer.audit.query-enabled`.
+* *Placeholders in bean definitions are resolved at build time.* The generated `@FeignClient(url = "${fineract.client.base-url}")` is one example; `FineractBaseUrlInterceptor` applies the runtime value to every request.
+* *Reflection needs metadata.* Spring's AOT engine and the GraalVM reachability metadata repository cover most libraries. The gaps found so far are registered in `NativeRuntimeHints`, each with the reason, and `NativeRuntimeHintsTest` pins them. A gap shows up at runtime as `MissingReflectionRegistrationError`, whose message includes the missing entry.
+
+To find gaps after a change, run the AOT-processed jar under the GraalVM tracing agent while the Cucumber suite drives it, then compare the recorded metadata with what the image already has:
+
+[source,bash]
+----
+./gradlew -Pnative bootJar
+java -agentlib:native-image-agent=config-output-dir=build/agent-metadata \
+     -Dspring.aot.enabled=true -jar build/libs/consumer-0.0.1-SNAPSHOT.jar
+# in another shell, with the rest of the stack up and the bff container stopped:
+./gradlew cucumber
+----
+
+Add what is missing to `NativeRuntimeHints` with a comment explaining why, rather than committing the raw agent output.
