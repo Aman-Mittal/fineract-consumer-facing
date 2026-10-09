@@ -118,7 +118,7 @@ public class TransfersQueryServiceImpl implements TransfersQueryService {
             if (legs.toAccountNo != null) {
                 continue;
             }
-            GetAccountTransfersPageItems details = fetch(() -> accountTransfersApi.retrieveOne6(legs.transfer.getId()));
+            GetAccountTransfersPageItems details = fetch(() -> accountTransfersApi.retrieveOneAccountTransfer(legs.transfer.getId()));
             if (isLoanDestination(details)) {
                 legsIterator.remove();
             } else {

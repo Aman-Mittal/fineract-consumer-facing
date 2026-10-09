@@ -104,7 +104,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
         Long clientId = userClientResolver.resolveClientId(jwt);
         PostLoansRequest request = buildScheduleRequest(query, clientId);
         PostLoansResponse response = previewCall(
-                () -> loansApi.calculateLoanScheduleOrSubmitLoanApplication(request, CALCULATE_SCHEDULE_COMMAND));
+                () -> loansApi.calculateOrSubmitLoanApplication(request, CALCULATE_SCHEDULE_COMMAND));
         return toScheduleData(response);
     }
 
@@ -112,7 +112,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
     public LoanAccountQueryData getLoan(Jwt jwt, Long loanId) {
         accessPolicyEvaluator.authorize(jwt, ConsumerAction.LOANS_VIEW, loanId,
                 LoanQueryAccessDeniedException::new);
-        GetLoansLoanIdResponse loan = fetch(() -> loansApi.retrieveLoan(loanId, false, ASSOCIATIONS, null, null));
+        GetLoansLoanIdResponse loan = fetch(() -> loansApi.retrieveOneLoan(loanId, false, ASSOCIATIONS, null, null));
         return toAccountData(loan);
     }
 
@@ -127,7 +127,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
     }
 
     private LoanTransactionQueryResponse listTransactionsPassthrough(LoanTransactionListQuery query) {
-        GetLoansLoanIdTransactionsResponse response = fetch(() -> loanTransactionsApi.retrieveTransactionsByLoanId(
+        GetLoansLoanIdTransactionsResponse response = fetch(() -> loanTransactionsApi.retrieveAllLoanTransactions(
                 query.getLoanId(), null, query.getPage(), query.getSize(), query.getSort()));
         if (response == null || response.getContent() == null) {
             return toTransactionPage(List.of(), query.getPage(), query.getSize(), 0L, 0);
@@ -142,7 +142,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
     private LoanTransactionQueryResponse listTransactionsDateFiltered(LoanTransactionListQuery query) {
         int page = query.getPage();
         int size = query.getSize();
-        GetLoansLoanIdTransactionsResponse response = fetch(() -> loanTransactionsApi.retrieveTransactionsByLoanId(
+        GetLoansLoanIdTransactionsResponse response = fetch(() -> loanTransactionsApi.retrieveAllLoanTransactions(
                 query.getLoanId(), null, 0, FETCH_ALL_PAGE_SIZE, query.getSort()));
         if (response == null || response.getContent() == null) {
             return toTransactionPage(List.of(), page, size, 0L, 0);
@@ -185,7 +185,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
         accessPolicyEvaluator.authorize(jwt, ConsumerAction.LOANS_VIEW, loanId,
                 LoanQueryAccessDeniedException::new);
         GetLoansLoanIdTransactionsTransactionIdResponse transaction =
-                fetch(() -> loanTransactionsApi.retrieveTransaction(loanId, transactionId, null));
+                fetch(() -> loanTransactionsApi.retrieveOneLoanTransaction(loanId, transactionId, null));
         return toTransactionData(transaction);
     }
 
@@ -206,7 +206,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
         accessPolicyEvaluator.authorize(jwt, ConsumerAction.LOANS_VIEW, loanId,
                 LoanQueryAccessDeniedException::new);
         GetLoansLoanIdChargesChargeIdResponse charge =
-                fetch(() -> loanChargesApi.retrieveLoanCharge(loanId, chargeId));
+                fetch(() -> loanChargesApi.retrieveOneLoanCharge(loanId, chargeId));
         return toChargeData(charge);
     }
 
@@ -293,7 +293,7 @@ public class LoansQueryServiceImpl implements LoansQueryService {
     }
 
     private GetLoanProductsProductIdResponse fetchProduct(Long productId) {
-        return FineractCaller.call(() -> loanProductsApi.retrieveLoanProductDetails(productId),
+        return FineractCaller.call(() -> loanProductsApi.retrieveOneLoanProduct(productId),
                 e -> new LoanProductNotFoundException(),
                 LoanQueryUpstreamUnavailableException::new,
                 LoanQueryUpstreamUnavailableException::new);

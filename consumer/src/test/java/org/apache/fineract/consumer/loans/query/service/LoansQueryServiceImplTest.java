@@ -163,7 +163,7 @@ class LoansQueryServiceImplTest {
                         new GetLoansLoanIdTransactionsTransactionIdResponse().id(2L).amount(BigDecimal.valueOf(50.0))))
                 .totalElements(42L)
                 .totalPages(3);
-        when(loanTransactionsApi.retrieveTransactionsByLoanId(LOAN_ID, null, PAGE, SIZE, "date,desc"))
+        when(loanTransactionsApi.retrieveAllLoanTransactions(LOAN_ID, null, PAGE, SIZE, "date,desc"))
                 .thenReturn(response);
 
         LoanTransactionListQuery query = LoanTransactionListQuery.builder()
@@ -187,7 +187,7 @@ class LoansQueryServiceImplTest {
     @Test
     void listTransactionsEmptyEnvelopeWhenNoContent() {
         Jwt jwt = jwt();
-        when(loanTransactionsApi.retrieveTransactionsByLoanId(LOAN_ID, null, PAGE, SIZE, null))
+        when(loanTransactionsApi.retrieveAllLoanTransactions(LOAN_ID, null, PAGE, SIZE, null))
                 .thenReturn(new GetLoansLoanIdTransactionsResponse());
 
         LoanTransactionListQuery query = LoanTransactionListQuery.builder()
@@ -216,7 +216,7 @@ class LoansQueryServiceImplTest {
                         transactionOn(5L, LocalDate.of(2026, 1, 20))))
                 .totalElements(999L)
                 .totalPages(99);
-        when(loanTransactionsApi.retrieveTransactionsByLoanId(
+        when(loanTransactionsApi.retrieveAllLoanTransactions(
                 LOAN_ID, null, 0, LoansQueryServiceImpl.FETCH_ALL_PAGE_SIZE, null))
                 .thenReturn(response);
 
@@ -234,7 +234,7 @@ class LoansQueryServiceImplTest {
         assertThat(result.getTotalPages()).isEqualTo(2);
         assertThat(result.getPage()).isZero();
         assertThat(result.getSize()).isEqualTo(2);
-        verify(loanTransactionsApi).retrieveTransactionsByLoanId(
+        verify(loanTransactionsApi).retrieveAllLoanTransactions(
                 LOAN_ID, null, 0, LoansQueryServiceImpl.FETCH_ALL_PAGE_SIZE, null);
     }
 
@@ -246,7 +246,7 @@ class LoansQueryServiceImplTest {
                         transactionOn(2L, LocalDate.of(2026, 1, 5)),
                         transactionOn(3L, LocalDate.of(2026, 1, 10)),
                         transactionOn(4L, LocalDate.of(2026, 1, 15))));
-        when(loanTransactionsApi.retrieveTransactionsByLoanId(
+        when(loanTransactionsApi.retrieveAllLoanTransactions(
                 LOAN_ID, null, 0, LoansQueryServiceImpl.FETCH_ALL_PAGE_SIZE, null))
                 .thenReturn(response);
 
@@ -269,7 +269,7 @@ class LoansQueryServiceImplTest {
         Jwt jwt = jwt();
         GetLoansLoanIdTransactionsResponse response = new GetLoansLoanIdTransactionsResponse()
                 .content(List.of(transactionOn(2L, LocalDate.of(2026, 1, 5))));
-        when(loanTransactionsApi.retrieveTransactionsByLoanId(
+        when(loanTransactionsApi.retrieveAllLoanTransactions(
                 LOAN_ID, null, 0, LoansQueryServiceImpl.FETCH_ALL_PAGE_SIZE, null))
                 .thenReturn(response);
 
@@ -303,7 +303,7 @@ class LoansQueryServiceImplTest {
                 .isInstanceOf(LoanQueryAccessDeniedException.class)
                 .hasFieldOrPropertyWithValue("code", LoanQueryAccessDeniedException.CODE);
 
-        verify(loanTransactionsApi, never()).retrieveTransactionsByLoanId(any(), any(), any(), any(), any());
+        verify(loanTransactionsApi, never()).retrieveAllLoanTransactions(any(), any(), any(), any(), any());
     }
 
     private static GetLoansLoanIdTransactionsTransactionIdResponse transactionOn(Long id, LocalDate date) {

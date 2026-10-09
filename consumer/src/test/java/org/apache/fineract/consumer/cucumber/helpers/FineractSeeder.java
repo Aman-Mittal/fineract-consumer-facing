@@ -247,14 +247,14 @@ public class FineractSeeder {
                 .loanType(LOAN_TYPE_INDIVIDUAL)
                 .locale(LOCALE)
                 .dateFormat(DATE_FORMAT);
-        long loanId = LOANS.calculateLoanScheduleOrSubmitLoanApplication(submit, null).getLoanId();
-        LOANS.stateTransitions(loanId,
+        long loanId = LOANS.calculateOrSubmitLoanApplication(submit, null).getLoanId();
+        LOANS.handleCommandsLoan(loanId,
                 new PostLoansLoanIdRequest()
                         .approvedOnDate(FIXED_DATE)
                         .locale(LOCALE)
                         .dateFormat(DATE_FORMAT),
                 APPROVE_COMMAND);
-        LOANS.stateTransitions(loanId,
+        LOANS.handleCommandsLoan(loanId,
                 new PostLoansLoanIdRequest()
                         .actualDisbursementDate(FIXED_DATE)
                         .locale(LOCALE)
