@@ -20,30 +20,48 @@
 package org.apache.fineract.consumer.audit.query.service;
 
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.apache.fineract.consumer.audit.query.data.AuditEventListQuery;
 import org.apache.fineract.consumer.audit.query.data.AuditEventQueryData;
 import org.apache.fineract.consumer.audit.query.domain.AuditEventQueryEntity;
+import org.apache.fineract.consumer.audit.query.exception.AuditQueryDisabledException;
 import org.apache.fineract.consumer.audit.query.repository.AuditQueryRepository;
 import org.apache.fineract.consumer.infrastructure.access.data.ConsumerAction;
 import org.apache.fineract.consumer.infrastructure.access.service.AccessPolicyEvaluator;
 import org.apache.fineract.consumer.infrastructure.access.service.UserClientResolver;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class AuditQueryServiceImpl implements AuditQueryService {
+
+    // Checked per call rather than with @ConditionalOnProperty on the controller: AOT evaluates bean
+    // conditions at build time, so a native image would ignore the runtime setting.
+    private static final String QUERY_ENABLED_PROPERTY = "${consumer.audit.query-enabled:false}";
 
     private final AccessPolicyEvaluator accessPolicyEvaluator;
     private final UserClientResolver userClientResolver;
     private final AuditQueryRepository auditQueryRepository;
+    private final boolean queryEnabled;
+
+    @Autowired
+    public AuditQueryServiceImpl(AccessPolicyEvaluator accessPolicyEvaluator, UserClientResolver userClientResolver,
+            AuditQueryRepository auditQueryRepository, @Value(QUERY_ENABLED_PROPERTY) boolean queryEnabled) {
+        this.accessPolicyEvaluator = accessPolicyEvaluator;
+        this.userClientResolver = userClientResolver;
+        this.auditQueryRepository = auditQueryRepository;
+        this.queryEnabled = queryEnabled;
+    }
 
     @Override
     @Transactional(readOnly = true)
     public List<AuditEventQueryData> listEvents(Jwt jwt, AuditEventListQuery query) {
+        if (!queryEnabled) {
+            throw new AuditQueryDisabledException();
+        }
         accessPolicyEvaluator.authorize(jwt, ConsumerAction.AUDIT_EVENT_LIST);
         Long userId = userClientResolver.resolveUserId(jwt);
         return auditQueryRepository

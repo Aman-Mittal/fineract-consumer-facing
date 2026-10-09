@@ -24,6 +24,7 @@ import feign.codec.Encoder;
 import java.util.stream.Stream;
 import org.apache.fineract.consumer.infrastructure.correlation.filter.CorrelationIdFilter;
 import org.apache.fineract.consumer.infrastructure.correlation.service.CorrelationIdHolder;
+import org.apache.fineract.consumer.infrastructure.fineractclient.interceptors.FineractBaseUrlInterceptor;
 import org.apache.fineract.consumer.infrastructure.fineractclient.interceptors.FineractBasicAuthInterceptor;
 import org.apache.fineract.consumer.infrastructure.fineractclient.interceptors.FineractCorrelationIdInterceptor;
 import org.apache.fineract.consumer.infrastructure.fineractclient.interceptors.FineractIdempotencyKeyInterceptor;
@@ -46,6 +47,11 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration
 @EnableConfigurationProperties(FineractClientProperties.class)
 public class FineractClientConfig {
+
+    @Bean
+    public FineractBaseUrlInterceptor fineractBaseUrlInterceptor(FineractClientProperties properties) {
+        return new FineractBaseUrlInterceptor(properties);
+    }
 
     @Bean
     public FineractBasicAuthInterceptor fineractBasicAuthInterceptor(FineractClientProperties properties) {

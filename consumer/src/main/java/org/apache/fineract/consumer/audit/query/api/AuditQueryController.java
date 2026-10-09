@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.fineract.consumer.audit.query.data.AuditEventListQuery;
 import org.apache.fineract.consumer.audit.query.data.AuditEventQueryData;
 import org.apache.fineract.consumer.audit.query.service.AuditQueryService;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -34,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@ConditionalOnProperty(name = "consumer.audit.query-enabled", havingValue = "true")
 @RestController
 @RequestMapping(value = "/api/v1/audit", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
