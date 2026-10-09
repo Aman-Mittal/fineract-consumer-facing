@@ -28,7 +28,6 @@ import org.apache.fineract.consumer.audit.query.repository.AuditQueryRepository;
 import org.apache.fineract.consumer.infrastructure.access.data.ConsumerAction;
 import org.apache.fineract.consumer.infrastructure.access.service.AccessPolicyEvaluator;
 import org.apache.fineract.consumer.infrastructure.access.service.UserClientResolver;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -47,7 +46,6 @@ public class AuditQueryServiceImpl implements AuditQueryService {
     private final AuditQueryRepository auditQueryRepository;
     private final boolean queryEnabled;
 
-    @Autowired
     public AuditQueryServiceImpl(AccessPolicyEvaluator accessPolicyEvaluator, UserClientResolver userClientResolver,
             AuditQueryRepository auditQueryRepository, @Value(QUERY_ENABLED_PROPERTY) boolean queryEnabled) {
         this.accessPolicyEvaluator = accessPolicyEvaluator;
