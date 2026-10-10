@@ -17,23 +17,24 @@
  * under the License.
  */
 
-import { inject, Injectable } from '@angular/core';
-import { OVERLAY } from '../adapters';
-import { I18nService } from '../i18n/i18n.service';
+import type { Page } from './page';
 
-const DISMISS_KEY = 'common.action.dismiss';
+/** The paging envelope every generated `*QueryResponse` shares. */
+export interface PagedResponse<T> {
+  content?: T[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  totalPages?: number;
+}
 
-@Injectable({ providedIn: 'root' })
-export class NotificationService {
-  private readonly overlay = inject(OVERLAY);
-  private readonly i18n = inject(I18nService);
-
-  showError(key: string): void {
-    void this.overlay.toast({
-      message: this.i18n.translate(key),
-      duration: 5000,
-      position: 'bottom',
-      dismissLabel: this.i18n.translate(DISMISS_KEY),
-    });
-  }
+/** Maps a generated paging envelope to a {@link Page}, defaulting absent fields. */
+export function mapPage<T>(response: PagedResponse<T>): Page<T> {
+  return {
+    content: response.content ?? [],
+    page: response.page ?? 0,
+    size: response.size ?? 0,
+    totalElements: response.totalElements ?? 0,
+    totalPages: response.totalPages ?? 0,
+  };
 }

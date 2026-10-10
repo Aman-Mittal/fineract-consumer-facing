@@ -21,22 +21,19 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, tap } from 'rxjs';
 import {
+  CONSENT_API,
   ConfirmPasswordChangeCommandRequest,
   InitiatePasswordChangeCommandRequest,
   OpenBankingConsentCommandData,
-  OpenBankingUserConsentCommandControllerService,
-  OpenBankingUserConsentQueryControllerService,
   OpenBankingUserConsentQueryData,
-  UserCommandControllerService,
+  USER_API,
   UserPasswordChangeChallengeCommandData,
-} from '@bff/client';
-import { deviceFingerprint } from '../../core/auth/device-fingerprint';
+} from '../../core/adapters';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsStore {
-  private readonly command = inject(UserCommandControllerService);
-  private readonly consentQuery = inject(OpenBankingUserConsentQueryControllerService);
-  private readonly consentCommand = inject(OpenBankingUserConsentCommandControllerService);
+  private readonly userApi = inject(USER_API);
+  private readonly consentApi = inject(CONSENT_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly passwordChangeChallenge = signal<UserPasswordChangeChallengeCommandData | null>(null);
@@ -45,21 +42,21 @@ export class SettingsStore {
   initiatePasswordChange(
     request: InitiatePasswordChangeCommandRequest,
   ): Observable<UserPasswordChangeChallengeCommandData> {
-    return this.command
-      .initiatePasswordChange(deviceFingerprint(), request)
+    return this.userApi
+      .initiatePasswordChange(request)
       .pipe(tap((challenge) => this.passwordChangeChallenge.set(challenge)));
   }
 
   confirmPasswordChange(request: ConfirmPasswordChangeCommandRequest): Observable<unknown> {
-    return this.command
-      .confirmPasswordChange(deviceFingerprint(), request)
+    return this.userApi
+      .confirmPasswordChange(request)
       .pipe(tap(() => this.passwordChangeChallenge.set(null)));
   }
 
   loadConsents(): void {
     this.consents.set([]);
-    this.consentQuery
-      .listConsents()
+    this.consentApi
+      .list()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (rows) => this.consents.set(rows),
@@ -68,6 +65,6 @@ export class SettingsStore {
   }
 
   revokeConsent(consentId: string): Observable<OpenBankingConsentCommandData> {
-    return this.consentCommand.revokeConsent(consentId);
+    return this.consentApi.revoke(consentId);
   }
 }

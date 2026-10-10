@@ -17,30 +17,28 @@
  * under the License.
  */
 
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AUDIT_API, AuditEventQueryData } from '../../core/adapters';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import {
+  OpenBankingUserConsentCommandControllerService,
+  OpenBankingUserConsentQueryControllerService,
+} from '@bff/client';
+import type {
+  ConsentApi,
+  OpenBankingConsentCommandData,
+  OpenBankingUserConsentQueryData,
+} from './consent.api';
 
 @Injectable({ providedIn: 'root' })
-export class DemoStore {
-  private readonly audit = inject(AUDIT_API);
-  private readonly destroyRef = inject(DestroyRef);
+export class BffConsentApi implements ConsentApi {
+  private readonly query = inject(OpenBankingUserConsentQueryControllerService);
+  private readonly command = inject(OpenBankingUserConsentCommandControllerService);
 
-  readonly events = signal<AuditEventQueryData[]>([]);
-  readonly loading = signal(false);
+  list(): Observable<OpenBankingUserConsentQueryData[]> {
+    return this.query.listConsents();
+  }
 
-  loadEvents(page: number, size: number): void {
-    this.events.set([]);
-    this.loading.set(true);
-    this.audit
-      .listEvents(page, size)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (rows) => {
-          this.events.set(rows);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+  revoke(consentId: string): Observable<OpenBankingConsentCommandData> {
+    return this.command.revokeConsent(consentId);
   }
 }

@@ -19,31 +19,30 @@
 
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import {
-  REGISTRATION_API,
+import { RegistrationCommandControllerService } from '@bff/client';
+import type {
+  RegistrationApi,
   SendOtpCommandData,
   SendOtpCommandRequest,
   SubmitRegistrationCommandData,
   SubmitRegistrationCommandRequest,
   VerifyOtpCommandData,
   VerifyOtpCommandRequest,
-} from '../../core/adapters';
+} from './registration.api';
 
 @Injectable({ providedIn: 'root' })
-export class RegistrationService {
-  private readonly api = inject(REGISTRATION_API);
+export class BffRegistrationApi implements RegistrationApi {
+  private readonly api = inject(RegistrationCommandControllerService);
 
-  submitIdentity(
-    request: SubmitRegistrationCommandRequest,
-  ): Observable<SubmitRegistrationCommandData> {
-    return this.api.submit(request);
+  submit(request: SubmitRegistrationCommandRequest): Observable<SubmitRegistrationCommandData> {
+    return this.api.submitRegistration(request);
   }
 
   sendOtp(request: SendOtpCommandRequest): Observable<SendOtpCommandData> {
-    return this.api.sendOtp(request);
+    return this.api.sendRegistrationOtp(request);
   }
 
   verifyOtp(request: VerifyOtpCommandRequest): Observable<VerifyOtpCommandData> {
-    return this.api.verifyOtp(request);
+    return this.api.verifyRegistrationOtp(request);
   }
 }

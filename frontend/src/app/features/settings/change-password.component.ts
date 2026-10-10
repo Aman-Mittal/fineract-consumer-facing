@@ -20,8 +20,9 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { IonButton, IonInput, IonProgressBar, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonInput, IonProgressBar } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
+import { OVERLAY } from '../../core/adapters';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { OtpComponent } from '../../shared/otp/otp.component';
@@ -81,7 +82,7 @@ const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 })
 export class ChangePasswordComponent {
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly overlay = inject(OVERLAY);
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
@@ -155,12 +156,12 @@ export class ChangePasswordComponent {
   }
 
   private presentSuccessToast(): void {
-    this.toastCtrl
-      .create({
-        message: this.i18n.translate('settings.changePassword.success'),
-        duration: 5000,
-        buttons: [{ text: this.i18n.translate('common.action.dismiss'), role: 'cancel' }],
-      })
-      .then((toast) => toast.present());
+    // Ionic's default position, which this toast used before it moved behind OVERLAY.
+    void this.overlay.toast({
+      message: this.i18n.translate('settings.changePassword.success'),
+      duration: 5000,
+      position: 'bottom',
+      dismissLabel: this.i18n.translate('common.action.dismiss'),
+    });
   }
 }

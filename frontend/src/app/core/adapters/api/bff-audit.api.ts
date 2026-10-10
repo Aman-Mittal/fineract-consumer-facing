@@ -17,30 +17,16 @@
  * under the License.
  */
 
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AUDIT_API, AuditEventQueryData } from '../../core/adapters';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { AuditQueryControllerService } from '@bff/client';
+import type { AuditApi, AuditEventQueryData } from './audit.api';
 
 @Injectable({ providedIn: 'root' })
-export class DemoStore {
-  private readonly audit = inject(AUDIT_API);
-  private readonly destroyRef = inject(DestroyRef);
+export class BffAuditApi implements AuditApi {
+  private readonly query = inject(AuditQueryControllerService);
 
-  readonly events = signal<AuditEventQueryData[]>([]);
-  readonly loading = signal(false);
-
-  loadEvents(page: number, size: number): void {
-    this.events.set([]);
-    this.loading.set(true);
-    this.audit
-      .listEvents(page, size)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (rows) => {
-          this.events.set(rows);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+  listEvents(page: number, size: number): Observable<AuditEventQueryData[]> {
+    return this.query.listAuditEvents(page, size);
   }
 }

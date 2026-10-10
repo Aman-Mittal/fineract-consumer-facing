@@ -21,29 +21,21 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import {
+  ChargesFilter,
   ForgotPasswordCommandRequest,
   ResetPasswordCommandRequest,
+  USER_API,
   UserChargeQueryData,
-  UserCommandControllerService,
   UserImageQueryData,
   UserProfileQueryData,
-  UserQueryControllerService,
-} from '@bff/client';
-import { deviceFingerprint } from '../../core/auth/device-fingerprint';
+} from '../../core/adapters';
 
 const IMAGE_MAX_WIDTH = 256;
 const IMAGE_MAX_HEIGHT = 256;
 
-export interface ChargesFilter {
-  status: string;
-  page: number;
-  size: number;
-}
-
 @Injectable({ providedIn: 'root' })
 export class ProfileStore {
-  private readonly query = inject(UserQueryControllerService);
-  private readonly command = inject(UserCommandControllerService);
+  private readonly api = inject(USER_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly profile = signal<UserProfileQueryData | null>(null);
@@ -55,8 +47,8 @@ export class ProfileStore {
   loadProfile(): void {
     this.profile.set(null);
     this.loading.set(true);
-    this.query
-      .getUserProfile()
+    this.api
+      .getProfile()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile) => {
@@ -70,13 +62,13 @@ export class ProfileStore {
   loadCharges(filter: ChargesFilter): void {
     this.charges.set([]);
     this.totalFilteredRecords.set(0);
-    this.query
-      .getUserCharges(filter.status, filter.page, filter.size)
+    this.api
+      .listCharges(filter)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
-          this.charges.set(response.charges ?? []);
-          this.totalFilteredRecords.set(response.totalFilteredRecords ?? 0);
+        next: (result) => {
+          this.charges.set(result.charges);
+          this.totalFilteredRecords.set(result.totalFilteredRecords);
         },
         error: () => {},
       });
@@ -84,8 +76,8 @@ export class ProfileStore {
 
   loadImage(): void {
     this.image.set(null);
-    this.query
-      .getUserImage(IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT)
+    this.api
+      .getImage(IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (image) => this.image.set(image),
@@ -94,10 +86,10 @@ export class ProfileStore {
   }
 
   forgotPassword(request: ForgotPasswordCommandRequest): Observable<unknown> {
-    return this.command.forgotPassword(deviceFingerprint(), request);
+    return this.api.forgotPassword(request);
   }
 
   resetPassword(request: ResetPasswordCommandRequest): Observable<unknown> {
-    return this.command.resetPassword(deviceFingerprint(), request);
+    return this.api.resetPassword(request);
   }
 }

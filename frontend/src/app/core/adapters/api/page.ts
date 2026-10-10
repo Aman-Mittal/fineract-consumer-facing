@@ -17,23 +17,19 @@
  * under the License.
  */
 
-import { inject, Injectable } from '@angular/core';
-import { OVERLAY } from '../adapters';
-import { I18nService } from '../i18n/i18n.service';
+/** One page of a paged BFF query, with the counters the BFF omits defaulted to zero. */
+export interface Page<T> {
+  readonly content: T[];
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+}
 
-const DISMISS_KEY = 'common.action.dismiss';
-
-@Injectable({ providedIn: 'root' })
-export class NotificationService {
-  private readonly overlay = inject(OVERLAY);
-  private readonly i18n = inject(I18nService);
-
-  showError(key: string): void {
-    void this.overlay.toast({
-      message: this.i18n.translate(key),
-      duration: 5000,
-      position: 'bottom',
-      dismissLabel: this.i18n.translate(DISMISS_KEY),
-    });
-  }
+/** The date range and paging a transaction history query accepts. */
+export interface TransactionFilter {
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  size?: number;
 }

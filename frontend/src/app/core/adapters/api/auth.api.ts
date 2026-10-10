@@ -17,33 +17,32 @@
  * under the License.
  */
 
-import { Injectable, inject } from '@angular/core';
+import { InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import {
-  REGISTRATION_API,
-  SendOtpCommandData,
-  SendOtpCommandRequest,
-  SubmitRegistrationCommandData,
-  SubmitRegistrationCommandRequest,
-  VerifyOtpCommandData,
-  VerifyOtpCommandRequest,
-} from '../../core/adapters';
+import type {
+  LoginChallengeCommandData,
+  LoginCommandRequest,
+  SessionCommandData,
+  VerifyTwoFactorCommandRequest,
+} from '@bff/client';
+import { BffAuthApi } from './bff-auth.api';
 
-@Injectable({ providedIn: 'root' })
-export class RegistrationService {
-  private readonly api = inject(REGISTRATION_API);
+export type {
+  LoginChallengeCommandData,
+  LoginCommandRequest,
+  SessionCommandData,
+  VerifyTwoFactorCommandRequest,
+};
 
-  submitIdentity(
-    request: SubmitRegistrationCommandRequest,
-  ): Observable<SubmitRegistrationCommandData> {
-    return this.api.submit(request);
-  }
-
-  sendOtp(request: SendOtpCommandRequest): Observable<SendOtpCommandData> {
-    return this.api.sendOtp(request);
-  }
-
-  verifyOtp(request: VerifyOtpCommandRequest): Observable<VerifyOtpCommandData> {
-    return this.api.verifyOtp(request);
-  }
+/** Signing in, keeping the session alive and signing out. */
+export interface AuthApi {
+  login(request: LoginCommandRequest): Observable<LoginChallengeCommandData>;
+  verifyTwoFactor(request: VerifyTwoFactorCommandRequest): Observable<SessionCommandData>;
+  refreshSession(): Observable<SessionCommandData>;
+  logout(): Observable<unknown>;
 }
+
+export const AUTH_API = new InjectionToken<AuthApi>('AuthApi', {
+  providedIn: 'root',
+  factory: () => inject(BffAuthApi),
+});

@@ -19,30 +19,12 @@
 
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { SummaryQueryControllerService } from '@bff/client';
+import { LoanCard, SUMMARY_API, SavingsCard } from '../../core/adapters';
 import { byAccountNo } from '../../shared/utils/account-sort';
-
-export interface SavingsCard {
-  id: number;
-  accountNo?: string;
-  productName?: string;
-  status?: string;
-  currency?: string;
-  balance?: number;
-}
-
-export interface LoanCard {
-  id: number;
-  accountNo?: string;
-  productName?: string;
-  status?: string;
-  currency?: string;
-  totalOutstanding?: number;
-}
 
 @Injectable({ providedIn: 'root' })
 export class SummaryStore {
-  private readonly summaryApi = inject(SummaryQueryControllerService);
+  private readonly summaryApi = inject(SUMMARY_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly savingsCards = signal<SavingsCard[]>([]);
@@ -59,36 +41,12 @@ export class SummaryStore {
     this.loanCards.set([]);
     this.loading.set(true);
     this.summaryApi
-      .getAccountsSummary()
+      .get()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (summary) => {
-          this.savingsCards.set(
-            (summary.savings ?? [])
-              .filter((item) => item.id != null)
-              .map((item) => ({
-                id: item.id!,
-                accountNo: item.accountNo,
-                productName: item.productName,
-                status: item.status,
-                currency: item.currency,
-                balance: item.accountBalance ?? 0,
-              }))
-              .sort(byAccountNo),
-          );
-          this.loanCards.set(
-            (summary.loans ?? [])
-              .filter((item) => item.id != null)
-              .map((item) => ({
-                id: item.id!,
-                accountNo: item.accountNo,
-                productName: item.productName,
-                status: item.status,
-                currency: item.currency,
-                totalOutstanding: item.loanBalance ?? 0,
-              }))
-              .sort(byAccountNo),
-          );
+          this.savingsCards.set([...summary.savings].sort(byAccountNo));
+          this.loanCards.set([...summary.loans].sort(byAccountNo));
           this.loading.set(false);
         },
         error: () => this.loading.set(false),

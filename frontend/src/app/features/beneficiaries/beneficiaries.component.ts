@@ -34,12 +34,12 @@ import {
   IonIcon,
   IonInput,
   IonProgressBar,
-  ToastController,
 } from '@ionic/angular/standalone';
+import { OVERLAY } from '../../core/adapters';
 import { addIcons } from 'ionicons';
 import { pencil, personAdd, trash } from 'ionicons/icons';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BeneficiaryQueryData } from '@bff/client';
+import { BeneficiaryQueryData } from '../../core/adapters';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { OtpComponent } from '../../shared/otp/otp.component';
@@ -263,7 +263,7 @@ const MIN_TRANSFER_LIMIT = 0.01;
 export class BeneficiariesComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly overlay = inject(OVERLAY);
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   protected readonly store = inject(BeneficiariesStore);
@@ -452,12 +452,12 @@ export class BeneficiariesComponent {
   }
 
   private notify(key: string): void {
-    void this.toastCtrl
-      .create({
-        message: this.i18n.translate(key),
-        duration: 5000,
-        buttons: [{ text: this.i18n.translate('common.action.dismiss'), role: 'cancel' }],
-      })
-      .then((toast) => toast.present());
+    // Ionic's default position, which this toast used before it moved behind OVERLAY.
+    void this.overlay.toast({
+      message: this.i18n.translate(key),
+      duration: 5000,
+      position: 'bottom',
+      dismissLabel: this.i18n.translate('common.action.dismiss'),
+    });
   }
 }

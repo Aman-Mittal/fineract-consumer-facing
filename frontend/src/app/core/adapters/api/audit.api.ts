@@ -17,33 +17,28 @@
  * under the License.
  */
 
-import { Injectable, inject } from '@angular/core';
+import { InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import {
-  REGISTRATION_API,
-  SendOtpCommandData,
-  SendOtpCommandRequest,
-  SubmitRegistrationCommandData,
-  SubmitRegistrationCommandRequest,
-  VerifyOtpCommandData,
-  VerifyOtpCommandRequest,
-} from '../../core/adapters';
+import type {
+  AuditEventCommandRequest,
+  AuditEventQueryData,
+  SubmitAuditEventsCommandRequest,
+} from '@bff/client';
+import { BffAuditApi } from './bff-audit.api';
 
-@Injectable({ providedIn: 'root' })
-export class RegistrationService {
-  private readonly api = inject(REGISTRATION_API);
+export type { AuditEventCommandRequest, AuditEventQueryData, SubmitAuditEventsCommandRequest };
 
-  submitIdentity(
-    request: SubmitRegistrationCommandRequest,
-  ): Observable<SubmitRegistrationCommandData> {
-    return this.api.submit(request);
-  }
-
-  sendOtp(request: SendOtpCommandRequest): Observable<SendOtpCommandData> {
-    return this.api.sendOtp(request);
-  }
-
-  verifyOtp(request: VerifyOtpCommandRequest): Observable<VerifyOtpCommandData> {
-    return this.api.verifyOtp(request);
-  }
+/**
+ * Reading the audit trail.
+ *
+ * Submitting events is not here: `AuditService` posts them with `fetch` and `keepalive` so a
+ * batch survives the page closing, which `HttpClient` and the generated client cannot do.
+ */
+export interface AuditApi {
+  listEvents(page: number, size: number): Observable<AuditEventQueryData[]>;
 }
+
+export const AUDIT_API = new InjectionToken<AuditApi>('AuditApi', {
+  providedIn: 'root',
+  factory: () => inject(BffAuditApi),
+});

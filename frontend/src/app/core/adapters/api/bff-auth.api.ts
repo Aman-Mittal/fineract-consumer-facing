@@ -17,53 +17,35 @@
  * under the License.
  */
 
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, finalize, shareReplay, tap } from 'rxjs';
-import {
-  AUTH_API,
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { AuthenticationCommandControllerService } from '@bff/client';
+import { deviceFingerprint } from '../../auth/device-fingerprint';
+import type {
+  AuthApi,
   LoginChallengeCommandData,
   LoginCommandRequest,
   SessionCommandData,
   VerifyTwoFactorCommandRequest,
-} from '../adapters';
+} from './auth.api';
 
 @Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly api = inject(AUTH_API);
-
-  private readonly sessionExpiresAt = signal<string | null>(null);
-  readonly isAuthenticated = computed(() => this.sessionExpiresAt() !== null);
-
-  private refreshInFlight: Observable<SessionCommandData> | null = null;
+export class BffAuthApi implements AuthApi {
+  private readonly api = inject(AuthenticationCommandControllerService);
 
   login(request: LoginCommandRequest): Observable<LoginChallengeCommandData> {
-    return this.api.login(request);
+    return this.api.login(deviceFingerprint(), request);
   }
 
   verifyTwoFactor(request: VerifyTwoFactorCommandRequest): Observable<SessionCommandData> {
-    return this.api.verifyTwoFactor(request).pipe(tap((session) => this.adoptSession(session)));
+    return this.api.verifyTwoFactor(deviceFingerprint(), request);
   }
 
-  refresh(): Observable<SessionCommandData> {
-    if (!this.refreshInFlight) {
-      this.refreshInFlight = this.api.refreshSession().pipe(
-        tap((session) => this.adoptSession(session)),
-        finalize(() => (this.refreshInFlight = null)),
-        shareReplay(1),
-      );
-    }
-    return this.refreshInFlight;
+  refreshSession(): Observable<SessionCommandData> {
+    return this.api.refreshSession(deviceFingerprint());
   }
 
   logout(): Observable<unknown> {
-    return this.api.logout().pipe(tap(() => this.clearSession()));
-  }
-
-  clearSession(): void {
-    this.sessionExpiresAt.set(null);
-  }
-
-  private adoptSession(session: SessionCommandData): void {
-    this.sessionExpiresAt.set(session.expiresAt ?? null);
+    return this.api.logout();
   }
 }
