@@ -134,12 +134,12 @@ describe('LoansStore', () => {
     expect(store.draft()?.loanId).toBe(LOAN_ID);
   });
 
-  it('withdraw sends command=withdraw and clears the draft', () => {
+  it('withdraw sends command=withdrawnByApplicant and clears the draft', () => {
     store.draft.set({ loanId: LOAN_ID });
 
     store.withdraw(LOAN_ID, 'key-withdraw', { withdrawnOnDate: '2026-06-25' }).subscribe();
     const req = controller.expectOne((r) => r.url === LOAN_URL);
-    expect(req.request.params.get('command')).toBe('withdraw');
+    expect(req.request.params.get('command')).toBe('withdrawnByApplicant');
     expect(req.request.headers.get('Idempotency-Key')).toBe('key-withdraw');
     req.flush({ loanId: LOAN_ID });
 

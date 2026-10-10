@@ -43,8 +43,12 @@ import type {
 } from './loan.api';
 import type { Page, TransactionFilter } from './page';
 
-/** The BFF's loan state-transition endpoint takes the transition as a path segment. */
-const WITHDRAW_COMMAND = 'withdraw';
+/**
+ * The `command` the BFF's withdraw endpoint accepts: Fineract's name for a withdrawal by the
+ * applicant (`LoansCommandService.WITHDRAW_COMMAND` in the BFF). Anything else is rejected
+ * with 400.
+ */
+const WITHDRAW_COMMAND = 'withdrawnByApplicant';
 
 @Injectable({ providedIn: 'root' })
 export class BffLoanApi implements LoanApi {
