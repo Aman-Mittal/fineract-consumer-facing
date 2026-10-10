@@ -26,11 +26,14 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEn
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
 import static org.apache.fineract.consumer.ArchitectureFixtures.ANY_DOMAIN;
 import static org.apache.fineract.consumer.ArchitectureFixtures.ANY_REPOSITORY;
 import static org.apache.fineract.consumer.ArchitectureFixtures.BASE_PACKAGE;
 import static org.apache.fineract.consumer.ArchitectureFixtures.FINERACT_GENERATED;
+import static org.apache.fineract.consumer.ArchitectureFixtures.FINERACT_GENERATED_API;
 import static org.apache.fineract.consumer.ArchitectureFixtures.MAIN_CLASSES;
+import static org.apache.fineract.consumer.ArchitectureFixtures.allFeatures;
 import static org.apache.fineract.consumer.ArchitectureFixtures.bothSides;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -75,6 +78,14 @@ class LayeringArchitectureTest {
         methods().that().areDeclaredInClassesThat().resideInAnyPackage(bothSides("service")).and().areDeclaredInClassesThat()
                 .areInterfaces().should(notExposeInSignature(DOMAIN_OR_REPOSITORY))
                 .because("AGENTS.md CQRS layout: types in a service signature live in the side's data/; domain/ is module-private")
+                .check(MAIN_CLASSES);
+    }
+
+    @Test
+    void featuresDoNotCallFineractFeignClientsDirectly() {
+        freeze(noClasses().that().resideInAnyPackage(allFeatures()).should().dependOnClassesThat()
+                .resideInAPackage(FINERACT_GENERATED_API).as("feature classes do not depend on the generated Fineract Feign clients")
+                .because("AGENTS.md Architecture: feature services depend on narrow service interfaces, not on Feign clients directly"))
                 .check(MAIN_CLASSES);
     }
 

@@ -32,6 +32,7 @@ final class ArchitectureFixtures {
     static final String BASE_PACKAGE = "org.apache.fineract.consumer";
     static final String INFRASTRUCTURE = BASE_PACKAGE + ".infrastructure..";
     static final String FINERACT_GENERATED = BASE_PACKAGE + ".infrastructure.fineractclient.generated..";
+    static final String FINERACT_GENERATED_API = BASE_PACKAGE + ".infrastructure.fineractclient.generated.api..";
     static final String ANY_DOMAIN = BASE_PACKAGE + "..domain..";
     static final String ANY_REPOSITORY = BASE_PACKAGE + "..repository..";
 
@@ -59,5 +60,10 @@ final class ArchitectureFixtures {
     /** The given layer on both CQRS sides of every feature. */
     static String[] bothSides(String layer) {
         return new String[] {side("command", layer), side("query", layer)};
+    }
+
+    /** Every feature package (both CQRS sides), excluding the shared infrastructure. */
+    static String[] allFeatures() {
+        return new String[] {side("command"), side("query")};
     }
 }
