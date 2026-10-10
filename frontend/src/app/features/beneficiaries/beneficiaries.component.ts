@@ -35,11 +35,10 @@ import {
   IonInput,
   IonProgressBar,
 } from '@ionic/angular/standalone';
-import { OVERLAY } from '../../core/adapters';
 import { addIcons } from 'ionicons';
 import { pencil, personAdd, trash } from 'ionicons/icons';
 import { TranslatePipe } from '@ngx-translate/core';
-import { BeneficiaryQueryData } from '../../core/adapters';
+import { BeneficiaryQueryData, OVERLAY } from '../../core/adapters';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { OtpComponent } from '../../shared/otp/otp.component';

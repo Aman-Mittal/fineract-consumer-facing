@@ -19,19 +19,19 @@
 
 import { InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import type {
-  SendOtpCommandData,
-  SendOtpCommandRequest,
-  SubmitRegistrationCommandData,
-  SubmitRegistrationCommandRequest,
-  VerifyOtpCommandRequest,
+import {
+  type SendOtpCommandData,
+  type SendOtpCommandRequest,
+  type SubmitRegistrationCommandData,
+  type SubmitRegistrationCommandRequest,
+  VerifyOtpCommandData,
+  type VerifyOtpCommandRequest,
 } from '@bff/client';
 import { BffRegistrationApi } from './bff-registration.api';
 
 // A value export, not `export type`: the registration screen compares against its status
 // constants, which the generated client emits as a namespace beside the interface.
-export { VerifyOtpCommandData } from '@bff/client';
-import type { VerifyOtpCommandData } from '@bff/client';
+export { VerifyOtpCommandData };
 export type {
   SendOtpCommandData,
   SendOtpCommandRequest,

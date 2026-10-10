@@ -19,13 +19,12 @@
 
 import { InjectionToken, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import type { OpenBankingConsentCommandData } from '@bff/client';
+import { type OpenBankingConsentCommandData, OpenBankingUserConsentQueryData } from '@bff/client';
 import { BffConsentApi } from './bff-consent.api';
 
 // A value export, not `export type`: screens compare against its status and permission
 // constants, which the generated client emits as a namespace beside the interface.
-export { OpenBankingUserConsentQueryData } from '@bff/client';
-import type { OpenBankingUserConsentQueryData } from '@bff/client';
+export { OpenBankingUserConsentQueryData };
 export type { OpenBankingConsentCommandData };
 
 /** Open-banking consents the consumer has granted to third parties. */
