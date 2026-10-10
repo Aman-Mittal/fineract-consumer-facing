@@ -227,6 +227,8 @@ consumer.<feature>.
 
 **Test tiers.** Unit tests (mock at the service-interface seam) and Cucumber E2E, plus `@WebMvcTest` controller slices for request binding, validation-to-400 translation, and authentication rejection. No `@SpringBootTest`, `@DataJpaTest`, or Testcontainers tiers in between. Tests assert against production constants (error `CODE`s, header names), never re-typed literals.
 
+**Enforcement.** The rules above that are checkable from bytecode run as tests in `consumer/src/test/java/org/apache/fineract/consumer/`: `ModulithArchitectureTest` (module boundaries) and the ArchUnit tests `CqrsArchitectureTest`, `LayeringArchitectureTest`, `NamingArchitectureTest`, `CodingConventionsArchitectureTest`, `TestTierArchitectureTest`. A rule that had violations when introduced is frozen (`FreezingArchRule`): its existing violations live in `consumer/src/test/resources/archunit_store/` and only new ones fail. The store only shrinks: fix a violation, run `./gradlew test --tests '*Architecture*'`, and commit the shrunken file; never add entries by hand. See `docs/consumer/architecture/modules.adoc` (Architecture rules).
+
 ### API error contract
 
 Every error response is a `ConsumerApiError` envelope with two fields:

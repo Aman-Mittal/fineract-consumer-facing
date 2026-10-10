@@ -142,6 +142,7 @@ The GitHub workflows in `.github/workflows/` run:
 == Where tests live
 
 * Backend unit tests: `consumer/src/test/java/org/apache/fineract/consumer/`, mirroring the feature packages (`savings/`, `loans/`, `transfers/`, `openbanking/`, and so on).
+* Architecture tests: the `*ArchitectureTest` classes in the root test package, with the frozen ArchUnit violations in `consumer/src/test/resources/archunit_store/` (see Architecture rules in the Module Structure section).
 * Cucumber feature files: `consumer/src/test/resources/features/`.
 * Cucumber step glue: the `org.apache.fineract.consumer.cucumber` package (steps under `cucumber.steps`), configured as the glue path in `consumer/build.gradle`.
 * Frontend unit specs: `*.spec.ts` files next to their subjects under `frontend/src/app/`.
