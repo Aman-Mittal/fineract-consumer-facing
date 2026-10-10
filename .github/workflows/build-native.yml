@@ -68,17 +68,23 @@ jobs:
         run: mkdir -p build/jacoco-agent build/jacoco
 
       # Compile before starting the stack: native-image peaks around 10 GiB and Fineract alone takes 2 GiB.
+      # The runner has 16 GiB. gradle.properties gives Gradle -Xmx12g, which it grows into while generating
+      # and compiling and keeps while the native-image builder runs beside it; together they exhausted the
+      # runner in the image's layout stage, which GitHub reports only as "The operation was canceled".
+      # Cap both so they fit: Gradle needs a few GiB here, the builder peaks at about 8.3 GiB.
       - name: Compile native image
-        run: ./gradlew --no-daemon -Pnative nativeCompile
+        env:
+          NATIVE_IMAGE_OPTIONS: -J-Xmx9g
+        run: ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx4g -Pnative nativeCompile
 
       - name: Start application stack with the native BFF
         run: docker compose -f compose.yaml -f compose.native.yaml up -d --build --wait --wait-timeout 300
 
       - name: Capture OpenAPI spec and generate the test client
-        run: ./gradlew --no-daemon openapi generateJavaClient
+        run: ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx4g openapi generateJavaClient
 
       - name: Run Cucumber tests against the native BFF
-        run: ./gradlew --no-daemon cucumber
+        run: ./gradlew --no-daemon -Dorg.gradle.jvmargs=-Xmx4g cucumber
 
       - name: Record native footprint
         if: success()
