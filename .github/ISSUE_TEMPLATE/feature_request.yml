@@ -1,0 +1,72 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Feature request
+description: Something consumers should be able to do that the BFF or the app does not support yet.
+labels: ['enhancement', 'Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Raise new features on the developer mailing list too.** The Fineract project decides
+        what it builds on <dev@fineract.apache.org>, and a consumer-facing feature usually needs
+        agreement on what a consumer may see or change before any code is written (for example,
+        which fields a consumer controls when they apply for a product). Subscribe with a blank
+        email to <dev-subscribe@fineract.apache.org>, and search the
+        [archive](https://lists.apache.org/list.html?dev@fineract.apache.org) first.
+
+        For a quick "is anyone already doing this?", ask in
+        [the developer room on Matrix](https://matrix.to/#/%23apache-fineract-dev:matrix.org).
+
+        If Fineract Core has no API for it yet, that has to land first: raise it in the
+        [ASF Jira project](https://issues.apache.org/jira/projects/FINERACT).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What a consumer cannot do today
+      description: The task they are trying to complete, and where the app or the API stops them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+      description: The behaviour you have in mind. Note which fields the consumer would control and which come from the product or the back office.
+    validations:
+      required: true
+
+  - type: input
+    id: fineract-api
+    attributes:
+      label: Fineract API it relies on
+      description: The Fineract Core endpoint the BFF would call, if you know it.
+      placeholder: POST /savingsaccounts
+
+  - type: input
+    id: discussion
+    attributes:
+      label: Dev list thread or Matrix discussion
+      description: A link to the discussion, if there is one.
+      placeholder: https://lists.apache.org/thread/...
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and workarounds
+      description: What consumers or staff do today instead, if anything.

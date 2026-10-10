@@ -1,0 +1,114 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Bug report
+description: The consumer-facing BFF or the Angular app behaves incorrectly.
+labels: ['bug', 'Triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems do not belong here: see [SECURITY.md](https://github.com/apache/fineract-consumer-facing/blob/main/SECURITY.md)
+        and report them privately to security@apache.org.
+
+        Bugs in Fineract Core itself (balances, accounting, rejected payloads that the BFF passed
+        through unchanged) belong in the [ASF Jira project](https://issues.apache.org/jira/projects/FINERACT).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where it happens
+      options:
+        - Angular app (frontend/)
+        - BFF API (consumer/)
+        - Both, or not sure
+        - Build, CI or documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in as a consumer with a savings account
+        2. Open Transfers -> New transfer
+        3. Enter the OTP from Mailpit
+        4. The confirmation fails with "..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error code, correlation ID and logs
+      description: |
+        A failing BFF response carries an error `code` (for example
+        `error.msg.consumer.otp.invalid`) and every response an `X-Correlation-ID` header.
+        Both, with the matching lines from the BFF log, usually identify the failure directly.
+        Remove any personal data, tokens or one-time passwords before pasting.
+      render: text
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: How you ran it
+      options:
+        - Docker Compose e2e stack (docker-compose.e2e.yml)
+        - consumer/compose.yaml with the BFF on the JVM
+        - consumer/compose.native.yaml (native image)
+        - Local dev servers (ng serve and bootRun)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: fineract-image
+    attributes:
+      label: Fineract image
+      description: The `apache/fineract` image tag the stack ran against (`FINERACT_IMAGE_TAG`, or the default in compose.yaml).
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: The commit of this repository you ran (`git rev-parse --short HEAD`).
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      description: For frontend issues.
+      placeholder: Firefox 152
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues.
+          required: true
+        - label: This is not a security vulnerability, and it is not a bug in Fineract Core.
+          required: true
