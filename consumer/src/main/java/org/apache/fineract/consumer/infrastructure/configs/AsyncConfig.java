@@ -19,12 +19,29 @@
 
 package org.apache.fineract.consumer.infrastructure.configs;
 
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
+import org.springframework.boot.task.ThreadPoolTaskExecutorBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcessor;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 @EnableAsync
 @EnableScheduling
 public class AsyncConfig {
+
+    /**
+     * Keeps {@code @Async} work (the non-transactional audit listener) on the bounded pool Spring Boot provides
+     * by default: 8 threads behind a queue. With {@code spring.threads.virtual.enabled} Boot would otherwise
+     * switch to an unbounded virtual-thread executor, and a burst of security events would contend for database
+     * connections with request handling instead of queueing.
+     */
+    @Bean(name = { TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME,
+            AsyncAnnotationBeanPostProcessor.DEFAULT_TASK_EXECUTOR_BEAN_NAME })
+    public ThreadPoolTaskExecutor applicationTaskExecutor(ThreadPoolTaskExecutorBuilder builder) {
+        return builder.build();
+    }
 }

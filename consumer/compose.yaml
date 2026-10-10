@@ -120,7 +120,8 @@ services:
       CONSUMER_AUDIT_QUERY_ENABLED: "true"
       SERVER_FORWARD_HEADERS_STRATEGY: framework
       JWT_KEY_LOCATION: file:/etc/bff/jwt-key.pem
-      JAVA_TOOL_OPTIONS: "-Xmx768m -Xms256m ${BFF_JACOCO_OPTS:-}"
+      # Heap sizing lives in the image (percentage of the container limit); this only adds the optional JaCoCo agent.
+      JAVA_TOOL_OPTIONS: "${BFF_JACOCO_OPTS:-}"
     volumes:
       - ./dev-jwt-key.pem:/etc/bff/jwt-key.pem:ro
       - ./build/jacoco-agent:/jacoco-agent:ro
@@ -133,7 +134,9 @@ services:
       timeout: 5s
       retries: 60
       start_period: 60s
-    mem_limit: ${BFF_MEM_LIMIT:-2g}
+    # The BFF is sized to run in 512 MB (the full Cucumber suite passes at 384 MB); raise it with BFF_MEM_LIMIT
+    # and the heap follows.
+    mem_limit: ${BFF_MEM_LIMIT:-512m}
 
   mailpit:
     image: axllent/mailpit:v1.30.2

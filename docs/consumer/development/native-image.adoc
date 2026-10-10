@@ -1,6 +1,6 @@
 = Native Image
 
-The BFF can be compiled ahead of time into a GraalVM native executable. The native build starts in well under a second and runs the full Cucumber suite in under 100 MiB, against roughly ten seconds and 750 MiB for the JVM jar. The JVM jar stays the default artifact; the native build is opt-in.
+The BFF can be compiled ahead of time into a GraalVM native executable. The native build starts in well under a second and runs the full Cucumber suite in under 100 MiB. The JVM jar takes roughly ten seconds to start and runs in a 512 MB container. The JVM jar stays the default artifact; the native build is opt-in.
 
 == Building
 
@@ -42,11 +42,17 @@ Measured with the full Cucumber suite (77 scenarios) against the compose stack. 
 |===
 |Build |Container limit |Startup |Idle |Peak during suite
 
-|JVM jar (`-Xmx768m`)
+|JVM jar, before heap sizing followed the container (`-Xmx768m`)
 |2 GB
 |9.7 s
 |726 MiB
 |846 MiB
+
+|JVM jar (`MaxRAMPercentage=60`)
+|512 MB
+|9.5 s
+|414 MiB
+|at the limit (page cache); no OOM kill
 
 |Native
 |512 MB
