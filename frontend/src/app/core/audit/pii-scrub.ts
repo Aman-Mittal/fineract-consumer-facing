@@ -28,10 +28,10 @@ const MAX_VALUE_LENGTH = 300;
 
 export function scrubPii(value: string): string {
   return value
-    .replace(EMAIL_PATTERN, REDACTED)
-    .replace(SSN_LIKE_PATTERN, REDACTED)
-    .replace(AADHAAR_LIKE_PATTERN, REDACTED)
-    .replace(CARD_LIKE_PATTERN, REDACTED);
+    .replaceAll(EMAIL_PATTERN, REDACTED)
+    .replaceAll(SSN_LIKE_PATTERN, REDACTED)
+    .replaceAll(AADHAAR_LIKE_PATTERN, REDACTED)
+    .replaceAll(CARD_LIKE_PATTERN, REDACTED);
 }
 
 export function buildDetails(

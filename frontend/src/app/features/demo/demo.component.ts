@@ -179,10 +179,10 @@ export class DemoComponent {
   }
 
   protected tryForbiddenSavings(): void {
-    this.router.navigate(['/savings', 999999]);
+    this.router.navigate(['/savings', 999_999]);
   }
 
   protected tryForbiddenLoan(): void {
-    this.router.navigate(['/loans', 999999]);
+    this.router.navigate(['/loans', 999_999]);
   }
 }

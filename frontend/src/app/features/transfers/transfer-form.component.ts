@@ -349,7 +349,7 @@ export class TransferFormComponent {
   }
 
   private destination(key: string): { toAccountId: number; toAccountType: string } {
-    const [toAccountType, id] = key.split(':');
+    const [toAccountType, id] = key.split(':', 2);
     return { toAccountType, toAccountId: Number(id) };
   }
 }

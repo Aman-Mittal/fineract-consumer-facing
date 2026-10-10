@@ -405,7 +405,7 @@ export class ShellComponent {
     this.audit.record('NAVIGATION', buildDetails({ route: template }));
     const view = SENSITIVE_ROUTE_VIEWS[template];
     if (view) {
-      const resourceId = RESOURCE_ID_PARAMS.map((name) => params[name]).find((v) => v);
+      const resourceId = RESOURCE_ID_PARAMS.map((name) => params[name]).find(Boolean);
       this.audit.record('SENSITIVE_VIEW', buildDetails({ view, resourceId }));
     }
   }
