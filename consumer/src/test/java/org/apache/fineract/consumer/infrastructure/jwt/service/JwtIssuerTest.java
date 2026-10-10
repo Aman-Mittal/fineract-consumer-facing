@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.spec.ECGenParameterSpec;
@@ -82,11 +83,12 @@ class JwtIssuerTest {
     }
 
     @Test
+    @SuppressWarnings("StringSplitter") // A signed JWT always has three non-empty segments.
     void tamperedTokenIsRejected() {
         IssuedJwt issued = jwtIssuer.issue(SUBJECT, Map.of(), Duration.ofMinutes(5));
         String[] parts = issued.getTokenValue().split("\\.");
         String tamperedPayload = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString("{\"sub\":\"someone-else\"}".getBytes());
+                .encodeToString("{\"sub\":\"someone-else\"}".getBytes(StandardCharsets.UTF_8));
         String tampered = parts[0] + "." + tamperedPayload + "." + parts[2];
 
         assertThatThrownBy(() -> jwtDecoder.decode(tampered)).isInstanceOf(JwtException.class);
@@ -122,7 +124,7 @@ class JwtIssuerTest {
     }
 
     private static JwtProperties propertiesFor(String pem, String issuer) {
-        return new JwtProperties(new ByteArrayResource(pem.getBytes()), issuer);
+        return new JwtProperties(new ByteArrayResource(pem.getBytes(StandardCharsets.UTF_8)), issuer);
     }
 
     private static String generateKeyPairPem() throws Exception {

@@ -100,7 +100,7 @@ function recordApiFailure(audit: AuditService, url: string, status: number): voi
 const UUID_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function endpointTemplate(url: string): string {
-  const path = url.split('?')[0].replace(/^https?:\/\/[^/]+/, '');
+  const path = url.split('?', 1)[0].replace(/^https?:\/\/[^/]+/, '');
   return path
     .split('/')
     .map((segment) => (/^\d+$/.test(segment) || UUID_SEGMENT.test(segment) ? ':id' : segment))

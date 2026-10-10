@@ -31,6 +31,9 @@ plugins {
 	id 'se.thinkcode.cucumber-runner' version '0.0.14'
 	id 'org.openapi.generator' version '7.14.0'
 	id 'com.github.jk1.dependency-license-report' version '3.1.4'
+	id 'net.ltgt.errorprone' version '4.4.0'
+	id 'com.github.spotbugs' version '6.5.4'
+	id 'com.github.andygoossens.modernizer' version '1.13.0'
 }
 
 group = 'org.apache.fineract'
@@ -107,6 +110,8 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+	errorprone 'com.google.errorprone:error_prone_core:2.49.0'
+	spotbugsPlugins 'jp.skypencil.findbugs.slf4j:bug-pattern:1.5.0@jar'
 }
 
 dependencyManagement {
@@ -136,6 +141,75 @@ sourceSets {
 
 tasks.named('compileJava') {
 	dependsOn 'generateFineractClient'
+}
+
+// Static analysis, mirroring Apache Fineract core: Error Prone (compile time), SpotBugs with the
+// SLF4J bug patterns, and Modernizer. Code generated into build/ (the Fineract Feign client, the
+// test client, Spring AOT sources) is excluded from all three.
+// See docs/consumer/development/build-and-test.adoc.
+tasks.withType(JavaCompile).configureEach {
+	options.errorprone {
+		disableWarningsInGeneratedCode = true
+		excludedPaths = '.*/build/generated/.*'
+		disable(
+			'CanIgnoreReturnValueSuggester',
+			'SameNameButDifferent', // Until Error Prone recognizes Lombok
+			'MultiVariableDeclaration', // Until Error Prone recognizes Lombok
+			'StringConcatToTextBlock' // Error Prone 2.49.0 crashes on JDK 25: https://github.com/google/error-prone/issues/5815
+		)
+		error(
+			'DefaultCharset',
+			'StringSplitter',
+			'MutablePublicArray',
+			'EqualsGetClass',
+			'FutureReturnValueIgnored'
+		)
+	}
+}
+
+configurations.named('spotbugs').configure {
+	resolutionStrategy.eachDependency {
+		if (it.requested.group == 'org.ow2.asm') {
+			it.useVersion '9.8'
+			it.because 'ASM 9.8 is required for JDK 25 class files'
+		}
+	}
+}
+
+spotbugs {
+	showProgress = false
+	excludeFilter = file("$projectDir/config/spotbugs/exclude.xml")
+	// Without this the SpotBugs worker inherits the JVM default (25% of RAM).
+	maxHeapSize = '1g'
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+	reports {
+		html {
+			required = true
+			stylesheet = 'fancy-hist.xsl'
+		}
+		xml {
+			required = true
+		}
+	}
+}
+
+modernizer {
+	includeTestClasses = true
+	failOnViolations = true
+	violationLogLevel = 'error'
+	javaVersion = java.toolchain.languageVersion.get().asInt().toString()
+	ignoreGeneratedClasses = true
+	// openapi-generator's @Generated is source-retention, so name the generated client packages instead.
+	ignorePackages = [
+		'org.apache.fineract.consumer.infrastructure.fineractclient.generated',
+		'org.apache.fineract.consumer.client'
+	]
+	// Rules: https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml
+	exclusions = [
+		'java/util/Optional.get:()Ljava/lang/Object;' // As in Fineract core: Optional.get() is not forced to orElseThrow()
+	]
 }
 
 def jacocoExcludes = [

@@ -60,6 +60,7 @@ function forms(fixture: ComponentFixture<ConsentComponent>): {
 }
 
 function inputValue(form: HTMLFormElement, name: string): string {
+  // eslint-disable-next-line unicorn/require-css-escape -- `name` is a fixed form-field literal from this spec.
   const input = form.querySelector<HTMLInputElement>(`input[name="${name}"]`);
   expect(input).not.toBeNull();
   return input!.value;
