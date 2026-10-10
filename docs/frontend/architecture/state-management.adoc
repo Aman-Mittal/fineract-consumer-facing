@@ -3,10 +3,10 @@
 
 == The signal-store pattern
 
-There is no state-management library (no NgRx, no component store). Each feature holds its state in a small hand-written store: an `@Injectable({ providedIn: 'root' })` service that exposes signals (Angular's reactive state primitive: a value container that notifies the template when the value changes) plus methods that call the generated `@bff/client` services. The contract between the layers is as follows:
+There is no state-management library (no NgRx, no component store). Each feature holds its state in a small hand-written store: an `@Injectable({ providedIn: 'root' })` service that exposes signals (Angular's reactive state primitive: a value container that notifies the template when the value changes) plus methods that call the BFF through the ports in `core/adapters` (see xref:adapter-boundary[Adapter Boundary]). The contract between the layers is as follows:
 
-* Components never call the generated client directly; they inject the store.
-* Read data flows one way: a store method calls the generated client over HTTP, the response is written into a signal with `.set()`, and the template re-renders because it reads the signal.
+* Components never call the BFF directly; they inject the store. Stores inject a port token (`SAVINGS_API`, `TRANSFER_API`, ...), never a generated service; lint enforces this.
+* Read data flows one way: a store method calls its port, whose adapter calls the generated client over HTTP, the response is written into a signal with `.set()`, and the template re-renders because it reads the signal.
 * Query methods (`load...`) are fire-and-forget `void` methods; the store subscribes internally and the component just reads the resulting signals.
 * Mutation methods (`initiate`, `confirm`, `submit`, ...) return the `Observable` (an RxJS stream that emits the HTTP response) so the calling component can subscribe and drive its own step transitions (for example advancing a form to the OTP step).
 
@@ -16,7 +16,8 @@ The transfer flow shows the whole chain end to end.
 
 . *Route.* `/transfers/new` lazy-loads `features/transfers/transfer-form.component.ts` (see xref:overview[Architecture Overview]).
 . *Component.* `TransferFormComponent` injects `TransfersStore` (plus `SavingsStore` and `BeneficiariesStore` to populate the account dropdowns). Submitting the form calls `store.initiate({...})` and subscribes; on success it flips a local `step` signal from `'form'` to `'otp'`.
-. *Store.* `features/transfers/transfers.store.ts` calls the generated `TransfersCommandControllerService.initiateTransfer(deviceFingerprint(), request)` and `tap`s the response into its `challenge` signal (the OTP challenge, including where the code was sent).
+. *Store.* `features/transfers/transfers.store.ts` calls `TRANSFER_API.initiate(request)` and `tap`s the response into its `challenge` signal (the OTP challenge, including where the code was sent).
+. *Adapter.* `core/adapters/api/bff-transfer.api.ts` calls the generated `TransfersCommandControllerService.initiateTransfer(deviceFingerprint(), request)`.
 . *Generated client.* The `@bff/client` service issues `POST /api/v1/transfers/initiate` with typed request and response DTOs; the interceptor chain adds the device-fingerprint header (see xref:bff-integration[BFF Integration]).
 . *Signal to template.* The OTP step reads `store.challenge()?.sentTo` directly in the template. Confirming calls `store.confirm(idempotencyKey, {...})`, which sets the `result` signal and clears `challenge`; the `'done'` step renders `store.result()` fields.
 . *List screen.* `/transfers` (`transfer.component.ts`) calls `store.loadHistory(page, size)` in its constructor. The store writes the page of `TransferQueryData` rows, plus the `historyPage` and `historyTotalPages` counters, into signals that the template's table and pager read.
@@ -37,7 +38,7 @@ The transfer flow shows the whole chain end to end.
 |`DemoStore` |`demo/demo.store.ts` |Client-side audit events queried back from the BFF; `loading`.
 |===
 
-Three features have no store. `auth` keeps its session state in the core `AuthService` (see below). `registration/registration.service.ts` is a stateless pass-through to the generated registration client (submit identity, send OTP, verify OTP), because the multi-step wizard state lives entirely in the component. `consent` has neither store nor service; its component reads query parameters and posts native HTML forms straight to the BFF, so it makes no `@bff/client` call at all.
+Three features have no store. `auth` keeps its session state in the core `AuthService` (see below). `registration/registration.service.ts` is a stateless pass-through to `REGISTRATION_API` (submit identity, send OTP, verify OTP), because the multi-step wizard state lives entirely in the component. `consent` has neither store nor service; its component reads query parameters and posts native HTML forms straight to the BFF, so it makes no `@bff/client` call at all.
 
 == Conventions
 

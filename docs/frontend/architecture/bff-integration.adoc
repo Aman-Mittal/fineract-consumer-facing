@@ -3,7 +3,7 @@
 
 == The generated client
 
-All HTTP traffic to the BFF goes through a machine-generated TypeScript client in `frontend/src/openapi-client/`, imported everywhere as `@bff/client` (a path alias mapped in `frontend/tsconfig.json`). It is organized as follows:
+All HTTP traffic to the BFF goes through a machine-generated TypeScript client in `frontend/src/openapi-client/`, imported as `@bff/client` (a path alias mapped in `frontend/tsconfig.json`). Only the API adapters in `src/app/core/adapters/api` and `app.config.ts` may import it; everything else uses the ports beside those adapters (see xref:adapter-boundary[Adapter Boundary]). It is organized as follows:
 
 * `api/` holds one Angular service per BFF controller (for example `savingsQueryController.service.ts`, `transfersCommandController.service.ts`), each extending the generated `BaseService` in `api.base.service.ts` and paired with a `*.serviceInterface.ts`. Method signatures are typed end to end: path, query, and header parameters plus the response DTO.
 * `model/` holds one TypeScript interface per BFF DTO (`SavingsAccountQueryData`, `ConfirmTransferCommandRequest`, ...), with camelCased property names.
