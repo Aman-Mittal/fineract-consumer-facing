@@ -140,7 +140,7 @@ Fineract Core code there rather than guessing. Treat the clone as read-only refe
 - Angular 22, standalone components, signal-based state
 - Ionic 8 UI components
 - Generated OpenAPI client at `frontend/src/openapi-client` (path alias `@bff/client`)
-- Adapter boundary: only `src/app/core/adapters/api/**` and `app.config.ts` import `@bff/client`, and only `core/adapters/overlay` imports Ionic's overlay controllers. Stores and components inject the port tokens from `core/adapters`; `npm run lint` fails otherwise. See `docs/frontend/architecture/adapter-boundary.adoc`.
+- Adapter boundary: only `src/app/core/adapters/api/**` and `app.config.ts` import `@bff/client`, and only `core/adapters/overlay` imports Ionic's overlay controllers. Stores and components inject the port tokens from `core/adapters`; `npm run lint` fails otherwise. The same holds for ngx-translate (use `I18N` and `| appTranslate`) and Web Storage (use `STORAGE`), except for the files in `frontend/eslint-suppressions.json`. That baseline only shrinks: run `npm run lint:prune` after migrating a file, and never add entries to it. See `docs/frontend/architecture/adapter-boundary.adoc`.
 - i18n via ngx-translate (English, Hindi)
 - Tests: Vitest (unit), Playwright (end-to-end)
 
