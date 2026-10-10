@@ -57,6 +57,26 @@ docker compose up -d --build --wait && ./gradlew cucumber; docker compose down -
 
 Feature files cover registration, login, savings, loans, transfers, beneficiaries, summary, profile, password, audit, open banking, rate limiting, and ABAC denial paths.
 
+== Static analysis
+
+The BFF build runs the same Java analyzers as Apache Fineract core, with versions matched to core's:
+
+* *Error Prone* (`net.ltgt.errorprone` 4.4.0, `error_prone_core` 2.49.0) runs inside every `compileJava` and `compileTestJava`. Error-level findings fail the compile; warnings are printed and do not. Beyond Error Prone's defaults, `DefaultCharset`, `StringSplitter`, `MutablePublicArray`, `EqualsGetClass` and `FutureReturnValueIgnored` are raised to errors, and the checks core disables for Lombok and for JDK 25 are disabled here too.
+* *SpotBugs* (`com.github.spotbugs` 6.5.4) with the SLF4J bug patterns (`jp.skypencil.findbugs.slf4j:bug-pattern` 1.5.0) runs as `spotbugsMain` and `spotbugsTest`. Exclusions live in `consumer/config/spotbugs/exclude.xml`, each with its reason; HTML and XML reports go to `consumer/build/reports/spotbugs/`.
+* *Modernizer* (`com.github.andygoossens.modernizer` 1.13.0) runs as `modernizer` over main and test classes and fails on calls to legacy APIs that have a modern replacement.
+
+Generated code is excluded from all three: the Fineract Feign client and the test client under `build/generated/`, and Spring AOT sources in a native build. Run them from `consumer/`, after the Java client has been generated once (see above):
+
+[source,bash]
+----
+cd consumer
+./gradlew compileJava compileTestJava spotbugsMain spotbugsTest modernizer
+----
+
+CI runs the same tasks in `build-tests-backend.yml` and keeps the SpotBugs reports as the `static-analysis-reports` artifact.
+
+Two things are deliberately left out. Fineract core also runs Spotless and Checkstyle, but adopting either here would reformat or flag most of the existing code, so that is a change of its own. And Fineract core publishes to SonarCloud, which needs a SonarCloud project and token provisioned for the repository by ASF Infra; until that exists, the analyzers above are the SonarQube-equivalent coverage. Tools under a Category X licence, such as the find-sec-bugs SpotBugs plugin (LGPL), are not used.
+
 == OpenAPI pipeline and generated clients
 
 OpenAPI is a machine-readable description of an HTTP API. The BFF's spec is not written by hand: springdoc generates it from the running application, and the `openapi` Gradle task scrapes it from `http://localhost:8080/v3/api-docs` into `consumer/build/openapi/openapi.json`. The stack must therefore be up for any task in this pipeline.
@@ -109,9 +129,9 @@ npm run e2e:stack:run
 
 The GitHub workflows in `.github/workflows/` run:
 
-* `build-tests-backend.yml`: on changes under `consumer/`, sets up JDK 21, generates the dev JWT key, starts the Docker stack, captures the OpenAPI spec and generates both clients (uploaded as artifacts), then runs `./gradlew test` and `./gradlew cucumber`, and tears down with `docker compose down -v`.
+* `build-tests-backend.yml`: on changes under `consumer/`, sets up JDK 21, generates the dev JWT key, starts the Docker stack, captures the OpenAPI spec and generates both clients (uploaded as artifacts), runs SpotBugs and Modernizer (see Static analysis), then runs `./gradlew test` and `./gradlew cucumber`, and tears down with `docker compose down -v`.
 * `build-tests-frontend.yml`: on changes under `frontend/`, `consumer/`, or the e2e compose file, runs two jobs. The unit job starts the backend, generates the TypeScript client, runs a production build (`npm run build`), and runs `npm test -- --no-watch`. The e2e job brings up the full stack with `npm run e2e:docker:up`, runs `npm run e2e` (Playwright), and tears down with `-v`.
-* `prettier-eslint.yaml`: on changes under `frontend/`, runs `npm run lint` (ESLint) and `npm run format:check` (Prettier) against the frontend sources.
+* `prettier-eslint.yaml`: on changes under `frontend/`, runs `npm run lint` (ESLint), `npm run test:eslint-rules` (the tests of the repository's own ESLint rules), and `npm run format:check` (Prettier) against the frontend sources.
 * `category-x-check.yml`: two jobs. The backend job runs `./gradlew checkLicense` to gate Gradle dependency licenses against the ASF allowlist and warns on Category B licenses. The frontend job generates an npm license report with `license-checker-rseidelsohn` and checks it against `frontend/allowed-licenses.json` with the same Category A pass, Category B warn, otherwise fail rules.
 * `codeql.yml`: CodeQL static analysis on push, pull request, and a weekly schedule.
 * `apache-rat.yml`: Apache RAT scan for missing license headers.

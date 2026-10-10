@@ -16,6 +16,7 @@ Every script in `frontend/package.json`:
 | `watch` | `ng build --watch --configuration development`: rebuilds on file change without serving.
 | `test` | `ng test`: Vitest unit tests through the Angular CLI.
 | `lint` | `ng lint`: ESLint over `src/**/*.ts` and `src/**/*.html`.
+| `test:eslint-rules` | `node --test`: the tests of the local ESLint rules in `eslint-rules/`.
 | `format` | Prettier, rewriting files under `src/` in place.
 | `format:check` | Prettier in check-only mode; fails if any file would change.
 | `i18n:check` | `node scripts/check-i18n.mjs`: fails on hardcoded user-facing text (see below).
@@ -101,3 +102,19 @@ npm run generate:client
 == Lint, format, and i18n check
 
 `npm run lint` runs angular-eslint over all TypeScript and templates under `src/`. `npm run format` and `npm run format:check` apply Prettier with the settings embedded in `package.json` (100-character lines, single quotes, the Angular parser for HTML). `npm run i18n:check` parses every component template under `src/app` and fails the build if it finds hardcoded user-facing text, meaning literal text nodes or attributes such as `title`, `placeholder`, and `aria-label`. All copy must therefore resolve through the translation pipe or be added to the script's allowlist. CI runs `lint` and `format:check` in the `prettier-eslint.yaml` workflow and `i18n:check` in the `i18n-check.yml` workflow (see the continuous-integration section of `docs/consumer/development/build-and-test.adoc`).
+
+=== Static analysis rules
+
+ESLint carries the frontend's SonarQube-equivalent checks. SonarQube's JavaScript and TypeScript rules reach ESLint as `eslint-plugin-sonarjs`, which is LGPL-3.0-only, an ASF Category X licence, so this project does not use it. Following apache/fineract-backoffice-ui, which removed it for that reason, the rules come from permissively licensed plugins instead, on top of `@eslint/js`, `typescript-eslint` and `angular-eslint`:
+
+[cols="2,1,3", options="header"]
+|===
+| Plugin | Licence | What it covers
+
+| `eslint-plugin-unicorn`, `unopinionated` set | MIT | Correctness rules: primitive wrappers, array misuse, regex and string pitfalls. The `recommended` set is not used because most of it is style.
+| `eslint-plugin-security`, `recommended` set | Apache-2.0 | `eval`, unsafe regular expressions, non-literal file system paths, timing-unsafe comparison, pseudo-random numbers.
+| `eslint-plugin-import-x` with `eslint-import-resolver-typescript` | MIT, ISC | Unresolved and duplicate imports. The backoffice uses `eslint-plugin-import`, which does not support ESLint 10; `import-x` is its maintained fork.
+| `eslint-rules/cognitive-complexity.js` | Apache-2.0 | SonarQube's cognitive-complexity metric at its default threshold of 15, implemented in this repository (copied from the backoffice) because no maintained permissive package exists. `npm run test:eslint-rules` pins its scoring.
+|===
+
+Rules from these sets that report style rather than defects, or whose autofix does not compile against this project's ES2022 `lib`, are switched off in `eslint.config.js`, each with its reason next to it. Some SonarQube rules have no permissive equivalent and are not covered, among them `no-duplicate-string`, `no-identical-functions` and `no-duplicated-branches`. Publishing to SonarCloud itself would need a project and token provisioned by ASF Infra and is out of scope for now.
