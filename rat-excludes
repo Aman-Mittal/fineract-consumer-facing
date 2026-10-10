@@ -15,3 +15,4 @@ AGENTS.md
 **/.prettierignore
 docs/**/*.adoc
 docs/**/*.puml
+frontend/eslint-suppressions.json

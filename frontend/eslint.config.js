@@ -29,6 +29,7 @@ const importX = require('eslint-plugin-import-x');
 const { createTypeScriptImportResolver } = require('eslint-import-resolver-typescript');
 const cognitiveComplexity = require('./eslint-rules/cognitive-complexity.js');
 const noGeneratedApiImport = require('./eslint-rules/no-generated-api-import.js');
+const noI18nLibraryImport = require('./eslint-rules/no-i18n-library-import.js');
 
 /**
  * Rules written for this repository, kept here rather than published.
@@ -48,6 +49,7 @@ const local = {
   rules: {
     'cognitive-complexity': cognitiveComplexity,
     'no-generated-api-import': noGeneratedApiImport,
+    'no-i18n-library-import': noI18nLibraryImport,
   },
 };
 
@@ -146,6 +148,25 @@ module.exports = defineConfig([
           })),
         },
       ],
+      // Ratcheted: files that predate the I18N and STORAGE adapters are listed in
+      // eslint-suppressions.json, which may only shrink. `npm run lint:prune` removes the
+      // entries for a file once it is migrated.
+      'local/no-i18n-library-import': [
+        'error',
+        {
+          packages: ['@ngx-translate/core', '@ngx-translate/http-loader'],
+          message:
+            "Use I18N or the appTranslate pipe from 'core/adapters'; in specs, provideI18nTesting(). See docs/frontend/architecture/adapter-boundary.adoc.",
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        ...['localStorage', 'sessionStorage'].map((name) => ({
+          name,
+          message:
+            "Use the STORAGE adapter from 'core/adapters'. See docs/frontend/architecture/adapter-boundary.adoc.",
+        })),
+      ],
       'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
       '@angular-eslint/directive-selector': [
@@ -179,6 +200,20 @@ module.exports = defineConfig([
   {
     files: ['src/app/core/adapters/overlay/**/*.ts'],
     rules: { 'no-restricted-imports': 'off' },
+  },
+  {
+    // The I18N adapter wraps ngx-translate; the composition root configures its loader and the
+    // shared spec setup provides it.
+    files: [
+      'src/app/core/adapters/i18n/**/*.ts',
+      'src/app/app.config.ts',
+      'src/app/testing/i18n-testing.ts',
+    ],
+    rules: { 'local/no-i18n-library-import': 'off' },
+  },
+  {
+    files: ['src/app/core/adapters/storage/**/*.ts'],
+    rules: { 'no-restricted-globals': 'off' },
   },
   {
     files: ['**/*.html'],

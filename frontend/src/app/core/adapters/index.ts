@@ -22,11 +22,14 @@
  * `docs/frontend/architecture/adapter-boundary.adoc`.
  *
  * Application code imports the contracts and tokens from here. The implementation files are
- * the only places permitted to import the underlying library or the generated BFF client, and
- * `eslint.config.js` enforces that.
+ * the only places permitted to import the underlying library, the generated BFF client or
+ * Web Storage, and `eslint.config.js` enforces that.
  */
 
+export * from './i18n/i18n.adapter';
+export * from './i18n/translate.pipe';
 export * from './overlay/overlay.adapter';
+export * from './storage/storage.adapter';
 
 // The generated BFF client, behind one contract per domain.
 export * from './api/page';
@@ -44,7 +47,9 @@ export * from './api/user.api';
 // The default implementations each token resolves to. Exported so a deployment replacing one
 // can name what it replaces, and so a TestBed can ask for the real thing explicitly.
 // Application code depends on the tokens above, never on these.
+export { NgxTranslateI18nAdapter } from './i18n/ngx-translate-i18n.adapter';
 export { IonicOverlayAdapter } from './overlay/ionic-overlay.adapter';
+export { WebStorageAdapter } from './storage/web-storage.adapter';
 export { BffAuditApi } from './api/bff-audit.api';
 export { BffAuthApi } from './api/bff-auth.api';
 export { BffBeneficiaryApi } from './api/bff-beneficiary.api';

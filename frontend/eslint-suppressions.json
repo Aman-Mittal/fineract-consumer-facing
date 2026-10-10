@@ -1,0 +1,175 @@
+{
+  "src/app/core/auth/device-fingerprint.ts": {
+    "no-restricted-globals": {
+      "count": 2
+    }
+  },
+  "src/app/core/i18n/i18n.service.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    },
+    "no-restricted-globals": {
+      "count": 2
+    }
+  },
+  "src/app/features/auth/forgot-password.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/auth/forgot-password.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/auth/login.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/beneficiaries/beneficiaries.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/beneficiaries/beneficiaries.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/consent/consent.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/consent/consent.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/demo/demo.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loan-apply.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loan-apply.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loan-repay.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loan-repay.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loans-detail.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loans-list.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/loans/loans-transaction.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/profile/profile.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/registration/registration.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/registration/registration.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/savings/savings-detail.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/savings/savings-list.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/savings/savings-transaction.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/settings/change-password.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/settings/change-password.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/settings/settings.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/summary/summary.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/transfers/transfer-form.component.spec.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/transfers/transfer-form.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/features/transfers/transfer.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/layout/shell.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/shared/language-switcher.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/shared/otp/otp.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  },
+  "src/app/shared/ui/status-badge.component.ts": {
+    "local/no-i18n-library-import": {
+      "count": 1
+    }
+  }
+}
