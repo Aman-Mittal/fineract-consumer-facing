@@ -19,9 +19,8 @@
 
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Configuration } from '@bff/client';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { provideBffApiTesting } from '../../testing/bff-api-testing';
 import { ProfileStore } from './profile.store';
 
 const PROFILE_URL = '/api/v1/user/profile';
@@ -38,12 +37,7 @@ describe('ProfileStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: Configuration, useValue: new Configuration({ basePath: '' }) },
-      ],
+      providers: [provideZonelessChangeDetection(), ...provideBffApiTesting()],
     });
     store = TestBed.inject(ProfileStore);
     controller = TestBed.inject(HttpTestingController);

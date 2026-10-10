@@ -19,9 +19,8 @@
 
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Configuration } from '@bff/client';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { provideBffApiTesting } from '../../testing/bff-api-testing';
 import { RegistrationService } from './registration.service';
 
 describe('RegistrationService', () => {
@@ -30,12 +29,7 @@ describe('RegistrationService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: Configuration, useValue: new Configuration({ basePath: '' }) },
-      ],
+      providers: [provideZonelessChangeDetection(), ...provideBffApiTesting()],
     });
     service = TestBed.inject(RegistrationService);
     controller = TestBed.inject(HttpTestingController);

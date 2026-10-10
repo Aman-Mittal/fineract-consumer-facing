@@ -24,7 +24,7 @@ import { provideRouter } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { BeneficiaryQueryData, SavingsAccountListItemQueryData } from '@bff/client';
+import { BeneficiaryQueryData, SavingsAccountListItemQueryData } from '../../core/adapters';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { BeneficiariesStore } from '../beneficiaries/beneficiaries.store';
 import { SavingsStore } from '../savings/savings.store';

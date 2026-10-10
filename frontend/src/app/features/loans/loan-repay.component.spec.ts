@@ -24,7 +24,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { LoanAccountQueryData, SavingsAccountListItemQueryData } from '@bff/client';
+import { LoanAccountQueryData, SavingsAccountListItemQueryData } from '../../core/adapters';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { SavingsStore } from '../savings/savings.store';
 import { TransfersStore } from '../transfers/transfers.store';
