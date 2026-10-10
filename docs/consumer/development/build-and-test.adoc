@@ -75,7 +75,7 @@ cd consumer
 
 CI runs the same tasks in `build-tests-backend.yml` and keeps the SpotBugs reports as the `static-analysis-reports` artifact.
 
-Two things are deliberately left out. Fineract core also runs Spotless and Checkstyle, but adopting either here would reformat or flag most of the existing code, so that is a change of its own. And Fineract core publishes to SonarCloud, which needs a SonarCloud project and token provisioned for the repository by ASF Infra; until that exists, the analyzers above are the SonarQube-equivalent coverage. Tools under a Category X licence, such as the find-sec-bugs SpotBugs plugin (LGPL), are not used.
+Two things are deliberately left out. Fineract core also runs Spotless and Checkstyle, but adopting either here would reformat or flag most of the existing code, so that is a change of its own. And Fineract core publishes to SonarCloud, which needs a SonarCloud project and token provisioned for the repository by ASF Infra; until that exists, the analyzers above are the SonarQube-equivalent coverage. SpotBugs itself is LGPL-2.1: like Fineract core, the build runs it as a tool and nothing of it is bundled into what the project ships. Error Prone, Modernizer and the SLF4J patterns are Apache-2.0. The find-sec-bugs SpotBugs plugin (LGPL-3.0) is not added.
 
 == OpenAPI pipeline and generated clients
 
