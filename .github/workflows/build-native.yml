@@ -72,10 +72,11 @@ jobs:
       # Gradle process keeps the heap it has grown into. Run with the native-image builder beside it, the two
       # exhausted the runner in the image's layout stage, which GitHub reports only as "The operation was
       # canceled". So generate, compile and AOT-process in one Gradle process, which exits and frees its heap,
-      # then build the image from a second one that only checks those tasks are up to date. The builder
-      # peaks at about 8.3 GiB; capping it makes a shortfall fail inside the build, with a message.
+      # then build the image from a second one that only finds those tasks (everything nativeCompile depends
+      # on) up to date. The builder peaks at about 8.3 GiB; capping it makes a shortfall fail inside the
+      # build, with a message.
       - name: Generate, compile and AOT-process
-        run: ./gradlew --no-daemon -Pnative aotClasses nativeCompileClasspathJar
+        run: ./gradlew --no-daemon -Pnative aotClasses jar generateResourcesConfigFile
 
       - name: Compile native image
         env:
