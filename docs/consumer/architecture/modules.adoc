@@ -125,7 +125,7 @@ The persistence model is single-store CQRS: one PostgreSQL database, one Liquiba
 
 === What Modulith does and does not enforce here
 
-Modulith enforces the boundary *between* modules. It does not police sub-packages *inside* a module, so `ModulithArchitectureTest` alone would not stop `loans.command` from importing `loans.query`. That gap is covered by a second test: `CqrsArchitectureTest` (also in `src/test/java/org/apache/fineract/consumer/`) uses ArchUnit, a library for writing architecture rules as tests, to discover every feature's `command` and `query` packages and fail the build on any dependency between the two sides of the same feature.
+Modulith enforces the boundary *between* modules. It does not police sub-packages *inside* a module, so `ModulithArchitectureTest` alone would not stop `loans.command` from importing `loans.query`. That gap is covered by a second test: `CqrsArchitectureTest` (also in `src/test/java/org/apache/fineract/consumer/`) uses ArchUnit, a library for writing architecture rules as tests, to discover every feature's `command` and `query` packages and fail the build on any dependency between the two sides of the same feature. The other conventions inside a module are ArchUnit rules too; see Architecture rules below.
 
 == Request flow through a module
 
@@ -135,10 +135,65 @@ A request passes through a fixed set of layers. Using a savings read as the exam
 2. *Service* (`SavingsQueryService` interface, `SavingsQueryServiceImpl`). Controllers depend on the interface, never the implementation. The implementation first authorizes the caller through the shared ABAC evaluator (`infrastructure.access.service.AccessPolicyEvaluator`), passing a `ConsumerAction` such as `SAVINGS_VIEW` and the resource id.
 3. *Data access*. Depending on the feature this is one or both of:
 ** a Spring Data repository over the BFF's own PostgreSQL tables (for features with local state such as `user`, `beneficiaries`, `openbanking`, `audit`), or
-** the generated Fineract client. Services call typed API classes such as `SavingsAccountApi` from `infrastructure.fineractclient.generated.api`, wrapping each call in `FineractCaller.call(...)` to translate upstream Feign errors into the feature's own exceptions.
+** the generated Fineract client. Services call typed API classes such as `SavingsAccountApi` from `infrastructure.fineractclient.generated.api`, wrapping each call in `FineractCaller.call(...)` to translate upstream Feign errors into the feature's own exceptions. `AGENTS.md` asks feature services to depend on narrow service interfaces instead; the existing direct uses are frozen (see Architecture rules), so no new feature class may inject a generated client.
 4. *Mapping*. The service maps Fineract's generated response models or JPA entities into the feature's own `*QueryData` or `*CommandData` classes in `data/`. Fineract response shapes never leave the service layer.
 
 Errors thrown anywhere along the path extend `AbstractConsumerException` and are translated to a uniform JSON error body by the shared handler in `infrastructure.exception` (see the Infrastructure section).
+
+== Architecture rules
+
+The conventions in `AGENTS.md` ("Backend conventions") that can be checked from bytecode are JUnit tests in `consumer/src/test/java/org/apache/fineract/consumer/`, so `./gradlew test` fails on a violation. Each rule's `because(...)` names the `AGENTS.md` section it comes from. Run only these tests with `./gradlew test --tests '*Architecture*'`.
+
+[cols="2,5,1"]
+|===
+|Test |Rules |Mode
+
+|`ModulithArchitectureTest`
+|Module boundaries and cycles (Spring Modulith, see Verification above).
+|hard
+
+|`CqrsArchitectureTest`
+|No dependency between the two sides of a feature. The query side declares only `@Transactional(readOnly = true)` (never `jakarta.transaction.Transactional`), its `@Entity` classes are `@Immutable`, it never calls a Spring Data repository's `save*`, `delete*` or `flush*`, and it declares no `@Modifying` query. Command services never return a `domain/` type.
+|hard
+
+|`LayeringArchitectureTest`
+|Controllers in `api/` depend on no `domain/`, `repository/` or `*Impl` class. Every `*Impl` in a `service` package implements the same-package interface named without `Impl`. `data/` does not depend on `domain/`. Service interfaces expose no `domain/` or `repository/` type. `api/` and `data/` never reference the generated Fineract models. Services use no `EntityManager`, `Query`, `TypedQuery` or criteria API, and `@Query` methods live in `repository` packages. `@RestControllerAdvice` / `@ControllerAdvice` classes live in `infrastructure.exception`.
+|hard
+
+|`LayeringArchitectureTest`
+|Feature packages do not depend on the generated Feign clients (`infrastructure.fineractclient.generated.api`).
+|frozen
+
+|`NamingArchitectureTest`
+|Command-side `data/` classes end in `Command`, `CommandData`, `CommandRequest` or `CommandResponse`. Enums, `*Constants` holders and `@ConfigurationProperties` classes carry no role suffix and are exempt.
+|frozen
+
+|`NamingArchitectureTest`
+|The same suffix rule for query-side `data/` (`Query`, `QueryData`, `QueryRequest`, `QueryResponse`). No class ends in `Dto`, `DTO`, `Result`, `Summary`, `Info` or `View`; no `infrastructure` class ends in `Manager`, `Util`, `Utils` or `Context`. `@RestController` classes are `*CommandController` / `*QueryController` by side, Spring Data repositories `*CommandRepository` / `*QueryRepository`, query entities `*QueryEntity`, and exception advice classes `*Handler`.
+|hard
+
+|`CodingConventionsArchitectureTest`
+|No `@Repository` on Spring Data interfaces. No Java records. Top-level `data/` classes (other than enums and interfaces) are `final` with only `private final` instance fields. Classes in a feature's `exception/` extend `AbstractConsumerException`, and every concrete subclass declares `public static final String CODE`. No class or package carries `@NamedInterface` or `@ApplicationModule`.
+|hard
+
+|`TestTierArchitectureTest`
+|No test class is (meta-)annotated with `@SpringBootTest` or `@DataJpaTest`, and none depends on Testcontainers. The Cucumber glue needs no exemption: it drives an already running BFF over HTTP and starts no Spring context.
+|hard
+|===
+
+Conventions that need judgement stay review items: whether a command service method touches BFF tables (and so needs `@Transactional`), the Lombok annotation set, and whether a test asserts against production constants.
+
+=== Frozen violations
+
+A rule that already had violations when it was introduced is wrapped in ArchUnit's `FreezingArchRule`. Its existing violations are recorded in `consumer/src/test/resources/archunit_store/`, one file per rule, and only violations not in that file fail the build. The store is written by `ShrinkOnlyViolationStore` (`testsupport`, configured in `src/test/resources/archunit.properties`): each file carries the licence header and its violations sorted, so the store is deterministic and Apache RAT checks it like any other file.
+
+The store is a ratchet; it may only shrink:
+
+* *Fixing a violation.* Fix the code and run `./gradlew test --tests '*Architecture*'`. The store drops the fixed lines from the rule's file; commit the shrunken file with the fix. When a file has no violations left, turn the rule into a plain `check(...)` and delete the file.
+* *A new violation* fails the test even though the rule is frozen. Fix the code; never add the line to the store.
+* *Freezing a new rule* (only for a rule that has violations on its first day; a rule that holds today is a plain rule). Wrap it in `freeze(...)`, run `./gradlew test --tests '*Architecture*' -ParchunitFreezeNewRules` once, and commit the new file. Without the flag (as in CI) a frozen rule with no committed file fails, and an existing file is never allowed to grow.
+
+Never edit a store file by hand to add entries. Lines carry source line numbers, but ArchUnit matches them ignoring the numbers, so unrelated edits to a frozen class do not fail the rule.
 
 == Design rationale
 

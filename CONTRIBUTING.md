@@ -52,7 +52,8 @@ npm run lint        # check lint rules
 - These boundaries are enforced, not just style: Spring Modulith and ArchUnit tests
   fail the build if a class imports across the two sides of a feature. Other features
   may depend only on a side's `data/` and `service/` packages; everything else is
-  module-private.
+  module-private. Further ArchUnit tests check the layering, naming and code-shape
+  conventions; see "Architecture rules" in `docs/consumer/architecture/modules.adoc`.
 
 ### Naming
 
