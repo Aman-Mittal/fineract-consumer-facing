@@ -255,6 +255,11 @@ task extractContainerClasses {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// Records the violations of a newly frozen ArchUnit rule once (FreezingArchRule); commit the new
+	// file under src/test/resources/archunit_store. Without the flag a missing store file fails the build.
+	if (project.hasProperty('archunitFreezeNewRules')) {
+		systemProperty 'archunit.freeze.store.default.allowStoreCreation', 'true'
+	}
 	finalizedBy 'jacocoTestReport'
 }
 
