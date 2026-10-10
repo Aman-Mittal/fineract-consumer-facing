@@ -25,7 +25,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @ConfigurationProperties(AuditRetentionProperties.PREFIX)
-public class AuditRetentionProperties {
+public final class AuditRetentionProperties {
 
     static final String PREFIX = "consumer.audit";
     private static final String MISSING_RETENTION_ENTRY_MESSAGE =

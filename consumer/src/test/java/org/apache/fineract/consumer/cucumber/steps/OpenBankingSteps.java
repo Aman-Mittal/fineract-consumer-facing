@@ -463,6 +463,8 @@ public class OpenBankingSteps {
         return params;
     }
 
+    // The scope list never ends in a separator, so String.split dropping trailing empties is moot.
+    @SuppressWarnings("StringSplitter")
     private List<Map.Entry<String, String>> decisionFields(boolean approve) {
         List<Map.Entry<String, String>> fields = new ArrayList<>();
         fields.add(OpenBankingClient.entry(OAuth2ParameterNames.CLIENT_ID,
@@ -502,6 +504,8 @@ public class OpenBankingSteps {
                 .orElseThrow(() -> new AssertionError("expected a Location header on the redirect"));
     }
 
+    // Empty trailing pairs carry no parameter, so String.split dropping them is the wanted behaviour.
+    @SuppressWarnings("StringSplitter")
     private static Map<String, String> queryParams(String url) {
         Map<String, String> params = new LinkedHashMap<>();
         String query = URI.create(url).getRawQuery();

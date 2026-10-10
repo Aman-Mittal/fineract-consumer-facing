@@ -136,6 +136,8 @@ public class ProfileSteps {
         assertThat(errorStatuses).containsExactly(UNAUTHORIZED, UNAUTHORIZED, UNAUTHORIZED, UNAUTHORIZED);
     }
 
+    // The call is made for the FeignException it should throw; its result is never wanted.
+    @SuppressWarnings("ReturnValueIgnored")
     private static int statusOf(Supplier<Object> call) {
         try {
             call.get();

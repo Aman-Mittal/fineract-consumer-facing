@@ -115,10 +115,10 @@ public class OpenBankingQueryServiceImpl implements OpenBankingQueryService {
     }
 
     private List<OpenBankingBalanceQueryData> loanBalances(Jwt jwt, OpenBankingAccountId accountId) {
-        loansQueryService.listAccounts(jwt).stream()
-                .filter(account -> accountId.getFineractId().equals(account.getId()))
-                .findFirst()
-                .orElseThrow(OpenBankingAccountNotFoundException::new);
+        if (loansQueryService.listAccounts(jwt).stream()
+                .noneMatch(account -> accountId.getFineractId().equals(account.getId()))) {
+            throw new OpenBankingAccountNotFoundException();
+        }
         LoanAccountQueryData loan = loansQueryService.getLoan(jwt, accountId.getFineractId());
         List<OpenBankingBalanceQueryData> balances = new ArrayList<>();
         addBalance(balances, accountId, BALANCE_TYPE_CLOSING_BOOKED, loan.getTotalOutstanding(),
