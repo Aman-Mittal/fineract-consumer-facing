@@ -19,6 +19,23 @@ under the License.
 
 <!-- Commits must be signed to merge — see CONTRIBUTING.md#signing-your-commits if you haven't set this up. -->
 
+<!--
+  New feature, or a change to what a consumer can see or do?
+
+  Apache Fineract decides those on its developer mailing list, not in a pull request. A PR
+  that arrives with a thread behind it is reviewed on its merits; one that proposes something
+  nobody has seen spends its first round of review on the proposal instead of the code.
+
+    Subscribe  dev-subscribe@fineract.apache.org   (blank email)
+    Post       dev@fineract.apache.org
+    Archive    https://lists.apache.org/list.html?dev@fineract.apache.org
+    Chat       https://matrix.to/#/%23apache-fineract-dev:matrix.org
+
+  Bug fixes, refactors and test work need none of this.
+
+  Found a security problem? Do not open a PR or an issue: see SECURITY.md.
+-->
+
 ## What and why
 
 <!-- One or two sentences explaining what changed and why. -->
@@ -48,8 +65,13 @@ the harness or workflow used. The contributor remains responsible for the submit
 <!-- Check each item, or explain why it does not apply. -->
 
 - [ ] I did not hand-edit generated files under `frontend/src/openapi-client/`.
+- [ ] Backend code follows the feature and CQRS layout in [AGENTS.md](AGENTS.md#backend-conventions-consumer) (command and query sides, module boundaries); frontend code goes through the adapters in `frontend/src/app/core/adapters/`.
+- [ ] I did not add entries to a lint or architecture baseline (suppressions, frozen violations) to get the build passing.
 - [ ] User-facing strings use translation keys.
 - [ ] I added or updated tests appropriate to this change, or explained why tests were not needed.
 - [ ] UI workflow changes include suitable e2e coverage, including real-backend testing where relevant.
 - [ ] Commits are signed — see [Signing your commits](CONTRIBUTING.md#signing-your-commits) in CONTRIBUTING.md.
 - [ ] I followed the [AI-assisted contributions guidance](CONTRIBUTING.md#ai-assisted-contributions).
+- [ ] If this adds a feature or changes what a consumer can see or do, I raised it on
+      [dev@fineract.apache.org](https://lists.apache.org/list.html?dev@fineract.apache.org) first,
+      or it is a bug fix, refactor or test change, where that does not apply.

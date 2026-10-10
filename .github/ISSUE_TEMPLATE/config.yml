@@ -1,0 +1,43 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+blank_issues_enabled: true
+
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/apache/fineract-consumer-facing/blob/main/SECURITY.md
+    about: >-
+      Do not open a public issue. Read SECURITY.md first, then report privately to the ASF
+      Security Team at security@apache.org.
+  - name: Bug in the Fineract platform itself
+    url: https://issues.apache.org/jira/projects/FINERACT
+    about: >-
+      Wrong balances, rejected API payloads, scheduler or accounting behaviour: anything Fineract
+      Core decides belongs in the ASF Jira project for apache/fineract. Issues here are for the
+      consumer-facing BFF and the Angular app.
+  - name: Fineract developer mailing list
+    url: https://lists.apache.org/list.html?dev@fineract.apache.org
+    about: >-
+      Where the project makes decisions. Design questions and feature ideas belong here before
+      they become an issue. Subscribe by emailing dev-subscribe@fineract.apache.org, then post to
+      dev@fineract.apache.org.
+  - name: Fineract chat on Matrix
+    url: https://matrix.to/#/%23apache-fineract-home:matrix.org
+    about: >-
+      Day-to-day conversation with the people building Fineract, and the place to ask whether
+      something is already being worked on. The developer room is apache-fineract-dev on
+      matrix.org. Conclusions that affect other people still go to the dev list.
