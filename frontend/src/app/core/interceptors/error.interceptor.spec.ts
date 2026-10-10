@@ -27,24 +27,22 @@ import {
 } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
-import { ToastController } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 import { ConsumerApiError } from '../../api/consumer-api-error';
+import { OVERLAY } from '../adapters';
 import { AuthService } from '../auth/auth.service';
 import { I18nService } from '../i18n/i18n.service';
 import { errorInterceptor } from './error.interceptor';
 
 describe('errorInterceptor', () => {
-  const present = vi.fn(() => Promise.resolve());
-  const create = vi.fn(() => Promise.resolve({ present }));
+  const toast = vi.fn(() => Promise.resolve());
   const refresh = vi.fn(() => of(void 0));
   const clearSession = vi.fn();
   let http: HttpClient;
   let controller: HttpTestingController;
 
   beforeEach(() => {
-    present.mockClear();
-    create.mockClear();
+    toast.mockClear();
     refresh.mockClear();
     clearSession.mockClear();
     TestBed.configureTestingModule({
@@ -53,7 +51,7 @@ describe('errorInterceptor', () => {
         provideRouter([]),
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
-        { provide: ToastController, useValue: { create } },
+        { provide: OVERLAY, useValue: { toast } },
         { provide: AuthService, useValue: { refresh, clearSession } },
         {
           provide: I18nService,
@@ -82,11 +80,11 @@ describe('errorInterceptor', () => {
       statusText: 'Forbidden',
     });
 
-    expect(create).toHaveBeenCalledWith({
+    expect(toast).toHaveBeenCalledWith({
       message: envelope.defaultMessage,
       duration: 5000,
       position: 'bottom',
-      buttons: [{ text: 'Dismiss', role: 'cancel' }],
+      dismissLabel: 'Dismiss',
     });
   });
 
@@ -112,11 +110,11 @@ describe('errorInterceptor', () => {
     expect(clearSession).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(received).toBeInstanceOf(HttpErrorResponse);
-    expect(create).toHaveBeenCalledWith({
+    expect(toast).toHaveBeenCalledWith({
       message: envelope.defaultMessage,
       duration: 5000,
       position: 'bottom',
-      buttons: [{ text: 'Dismiss', role: 'cancel' }],
+      dismissLabel: 'Dismiss',
     });
   });
 

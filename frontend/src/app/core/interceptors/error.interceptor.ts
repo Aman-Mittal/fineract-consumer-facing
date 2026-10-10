@@ -20,9 +20,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular/standalone';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { ConsumerApiError } from '../../api/consumer-api-error';
+import { OVERLAY, OverlayAdapter } from '../adapters';
 import { AUDIT_EVENTS_PATH, AuditService } from '../audit/audit.service';
 import { buildDetails } from '../audit/pii-scrub';
 import { AuthService } from '../auth/auth.service';
@@ -35,7 +35,7 @@ const DEVICE_MISMATCH_CODE = 'error.msg.consumer.auth.device.fingerprint.forbidd
 const RATE_LIMITED_KEY = 'common.error.rateLimited';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const toast = inject(ToastController);
+  const toast = inject(OVERLAY);
   const auth = inject(AuthService);
   const audit = inject(AuditService);
   const router = inject(Router);
@@ -107,20 +107,18 @@ function endpointTemplate(url: string): string {
     .join('/');
 }
 
-function notify(toast: ToastController, i18n: I18nService, error: HttpErrorResponse): void {
+function notify(toast: OverlayAdapter, i18n: I18nService, error: HttpErrorResponse): void {
   const body = error.error as ConsumerApiError | null;
   showToast(toast, i18n, resolveMessage(i18n, body));
 }
 
-function showToast(toast: ToastController, i18n: I18nService, message: string): void {
-  void toast
-    .create({
-      message,
-      duration: 5000,
-      position: 'bottom',
-      buttons: [{ text: i18n.translate(DISMISS_KEY), role: 'cancel' }],
-    })
-    .then((t) => t.present());
+function showToast(toast: OverlayAdapter, i18n: I18nService, message: string): void {
+  void toast.toast({
+    message,
+    duration: 5000,
+    position: 'bottom',
+    dismissLabel: i18n.translate(DISMISS_KEY),
+  });
 }
 
 function resolveMessage(i18n: I18nService, body: ConsumerApiError | null): string {

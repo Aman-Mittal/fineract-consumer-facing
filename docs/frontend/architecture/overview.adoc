@@ -68,7 +68,7 @@ The shell is also where client-side audit events for navigation originate. Every
 |Hand-written TypeScript types for BFF contracts the OpenAPI generator does not emit. One file: `consumer-api-error.ts`, the `ConsumerApiError` error envelope (`code`, `defaultMessage`) that the BFF returns on failures.
 
 |`core/`
-|Singletons wired via `app.config.ts`: `auth/` (`AuthService`, `device-fingerprint.ts`), `guards/` (`authGuard`), `interceptors/` (`authInterceptor`, `errorInterceptor`), `audit/` (audit batching service, PII scrubbing, global error handler), `i18n/` (translation helper), `notifications/` (toast helper).
+|Singletons wired via `app.config.ts`: `adapters/` (the ports and adapters in front of the generated BFF client and Ionic's overlay controllers; see xref:adapter-boundary[Adapter Boundary]), `auth/` (`AuthService`, `device-fingerprint.ts`), `guards/` (`authGuard`), `interceptors/` (`authInterceptor`, `errorInterceptor`), `audit/` (audit batching service, PII scrubbing, global error handler), `i18n/` (translation helper), `notifications/` (toast helper).
 
 |`features/`
 |One folder per BFF domain, each lazy-loaded: `auth`, `registration`, `consent`, `summary`, `savings`, `loans`, `transfers`, `beneficiaries`, `profile`, `settings`, `demo`. Eight of them (`summary`, `savings`, `loans`, `transfers`, `beneficiaries`, `profile`, `settings`, `demo`) hold their components plus a signal store (see xref:state-management[State Management]). The exceptions are `auth` (session state lives in the core `AuthService`), `registration` (a stateless service), and `consent` (a single component with no store or service).
@@ -80,7 +80,7 @@ The shell is also where client-side audit events for navigation originate. Every
 |Reusable presentation pieces: `otp/` (the OTP entry component used by every step-up flow), `ui/` (page header, status badge), `utils/` (account sorting, date helpers), `css/` (styles shared by two or more screens), and the language switcher.
 |===
 
-The generated BFF client lives outside `app/`, in `frontend/src/openapi-client/` (imported as `@bff/client`); see xref:bff-integration[BFF Integration].
+The generated BFF client lives outside `app/`, in `frontend/src/openapi-client/` (imported as `@bff/client`, but only by the API adapters); see xref:bff-integration[BFF Integration].
 
 == The authGuard
 

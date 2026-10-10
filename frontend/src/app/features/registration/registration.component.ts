@@ -35,7 +35,7 @@ import {
   IonSelectOption,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { VerifyOtpCommandData } from '@bff/client';
+import { VerifyOtpCommandData } from '../../core/adapters';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { OtpComponent } from '../../shared/otp/otp.component';
 import { RegistrationService } from './registration.service';

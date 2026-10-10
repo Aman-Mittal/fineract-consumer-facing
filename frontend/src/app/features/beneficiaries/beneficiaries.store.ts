@@ -20,8 +20,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import {
-  BeneficiariesCommandControllerService,
-  BeneficiariesQueryControllerService,
+  BENEFICIARY_API,
   BeneficiaryChallengeCommandData,
   BeneficiaryCommandData,
   BeneficiaryQueryData,
@@ -29,44 +28,38 @@ import {
   ConfirmUpdateBeneficiaryCommandRequest,
   InitiateAddBeneficiaryCommandRequest,
   InitiateUpdateBeneficiaryCommandRequest,
-} from '@bff/client';
+} from '../../core/adapters';
 import { AuditService } from '../../core/audit/audit.service';
-import { deviceFingerprint } from '../../core/auth/device-fingerprint';
 
 @Injectable({ providedIn: 'root' })
 export class BeneficiariesStore {
-  private readonly query = inject(BeneficiariesQueryControllerService);
-  private readonly command = inject(BeneficiariesCommandControllerService);
+  private readonly api = inject(BENEFICIARY_API);
   private readonly audit = inject(AuditService);
 
   readonly beneficiaries = signal<BeneficiaryQueryData[]>([]);
   readonly challenge = signal<BeneficiaryChallengeCommandData | null>(null);
 
   load(): Observable<BeneficiaryQueryData[]> {
-    return this.query.listBeneficiaries().pipe(tap((rows) => this.beneficiaries.set(rows)));
+    return this.api.list().pipe(tap((rows) => this.beneficiaries.set(rows)));
   }
 
   initiateAdd(
     request: InitiateAddBeneficiaryCommandRequest,
   ): Observable<BeneficiaryChallengeCommandData> {
     this.audit.record('SENSITIVE_ACTION', { action: 'BENEFICIARY_ADD' });
-    return this.command
-      .initiateAddBeneficiary(deviceFingerprint(), request)
-      .pipe(tap((challenge) => this.challenge.set(challenge)));
+    return this.api.initiateAdd(request).pipe(tap((challenge) => this.challenge.set(challenge)));
   }
 
   confirmAdd(request: ConfirmAddBeneficiaryCommandRequest): Observable<BeneficiaryCommandData> {
-    return this.command
-      .confirmAddBeneficiary(deviceFingerprint(), request)
-      .pipe(tap(() => this.challenge.set(null)));
+    return this.api.confirmAdd(request).pipe(tap(() => this.challenge.set(null)));
   }
 
   initiateUpdate(
     publicId: string,
     request: InitiateUpdateBeneficiaryCommandRequest,
   ): Observable<BeneficiaryChallengeCommandData> {
-    return this.command
-      .initiateUpdateBeneficiary(deviceFingerprint(), publicId, request)
+    return this.api
+      .initiateUpdate(publicId, request)
       .pipe(tap((challenge) => this.challenge.set(challenge)));
   }
 
@@ -74,12 +67,10 @@ export class BeneficiariesStore {
     publicId: string,
     request: ConfirmUpdateBeneficiaryCommandRequest,
   ): Observable<BeneficiaryCommandData> {
-    return this.command
-      .confirmUpdateBeneficiary(deviceFingerprint(), publicId, request)
-      .pipe(tap(() => this.challenge.set(null)));
+    return this.api.confirmUpdate(publicId, request).pipe(tap(() => this.challenge.set(null)));
   }
 
   delete(publicId: string): Observable<unknown> {
-    return this.command.deleteBeneficiary(publicId);
+    return this.api.remove(publicId);
   }
 }

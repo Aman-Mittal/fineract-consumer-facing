@@ -42,7 +42,7 @@ import {
   IonSelectOption,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SubmitLoanApplicationCommandRequest } from '@bff/client';
+import { SubmitLoanApplicationCommandRequest } from '../../core/adapters';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { LoansStore } from './loans.store';
 

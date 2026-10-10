@@ -18,24 +18,22 @@
  */
 
 import { inject, Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular/standalone';
+import { OVERLAY } from '../adapters';
 import { I18nService } from '../i18n/i18n.service';
 
 const DISMISS_KEY = 'common.action.dismiss';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly toast = inject(ToastController);
+  private readonly overlay = inject(OVERLAY);
   private readonly i18n = inject(I18nService);
 
   showError(key: string): void {
-    void this.toast
-      .create({
-        message: this.i18n.translate(key),
-        duration: 5000,
-        position: 'bottom',
-        buttons: [{ text: this.i18n.translate(DISMISS_KEY), role: 'cancel' }],
-      })
-      .then((t) => t.present());
+    void this.overlay.toast({
+      message: this.i18n.translate(key),
+      duration: 5000,
+      position: 'bottom',
+      dismissLabel: this.i18n.translate(DISMISS_KEY),
+    });
   }
 }

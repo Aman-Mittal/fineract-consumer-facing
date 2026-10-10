@@ -28,6 +28,7 @@ const security = require('eslint-plugin-security');
 const importX = require('eslint-plugin-import-x');
 const { createTypeScriptImportResolver } = require('eslint-import-resolver-typescript');
 const cognitiveComplexity = require('./eslint-rules/cognitive-complexity.js');
+const noGeneratedApiImport = require('./eslint-rules/no-generated-api-import.js');
 
 /**
  * Rules written for this repository, kept here rather than published.
@@ -35,12 +36,32 @@ const cognitiveComplexity = require('./eslint-rules/cognitive-complexity.js');
  * `cognitive-complexity` stands in for SonarQube's rule of the same name. The ESLint port of the
  * SonarQube rules, `eslint-plugin-sonarjs`, is LGPL-3.0-only (Apache Category X), so it is not
  * used; see docs/frontend/development/build-and-test.adoc.
+ *
+ * `no-generated-api-import` holds the adapter boundary (docs/frontend/architecture/
+ * adapter-boundary.adoc). The generated BFF client and Ionic's imperative overlay controllers
+ * are reached only through the contracts in src/app/core/adapters. The implementations there,
+ * and the composition root that configures them, are the only files allowed to import either.
+ * Specs are not exempt: a spec mocks the contract, not the generated service or the controller
+ * behind it.
  */
 const local = {
   rules: {
     'cognitive-complexity': cognitiveComplexity,
+    'no-generated-api-import': noGeneratedApiImport,
   },
 };
+
+/** Ionic's imperative surface, reached through the OVERLAY adapter. */
+const IONIC_CONTROLLERS = [
+  'ActionSheetController',
+  'AlertController',
+  'LoadingController',
+  'MenuController',
+  'ModalController',
+  'PickerController',
+  'PopoverController',
+  'ToastController',
+];
 
 module.exports = defineConfig([
   {
@@ -104,6 +125,27 @@ module.exports = defineConfig([
       'unicorn/prefer-early-return': 'off',
       'unicorn/no-negated-condition': 'off',
 
+      // --- the adapter boundary ------------------------------------------------------------
+      'local/no-generated-api-import': [
+        'error',
+        {
+          dir: 'src/openapi-client',
+          aliases: ['@bff/client'],
+          message:
+            "Depend on a contract from 'core/adapters' instead. See docs/frontend/architecture/adapter-boundary.adoc.",
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: ['@ionic/angular/standalone', '@ionic/angular'].map((name) => ({
+            name,
+            importNames: IONIC_CONTROLLERS,
+            message:
+              "Use the OVERLAY adapter from 'core/adapters'. See docs/frontend/architecture/adapter-boundary.adoc.",
+          })),
+        },
+      ],
       'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
       '@angular-eslint/directive-selector': [
@@ -123,6 +165,20 @@ module.exports = defineConfig([
         },
       ],
     },
+  },
+  {
+    // The API adapters map the generated client to the contracts; the composition root and
+    // the shared test setup configure it.
+    files: [
+      'src/app/core/adapters/api/**/*.ts',
+      'src/app/app.config.ts',
+      'src/app/testing/bff-api-testing.ts',
+    ],
+    rules: { 'local/no-generated-api-import': 'off' },
+  },
+  {
+    files: ['src/app/core/adapters/overlay/**/*.ts'],
+    rules: { 'no-restricted-imports': 'off' },
   },
   {
     files: ['**/*.html'],

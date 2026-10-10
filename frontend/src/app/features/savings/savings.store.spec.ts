@@ -19,9 +19,8 @@
 
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Configuration } from '@bff/client';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { provideBffApiTesting } from '../../testing/bff-api-testing';
 import { SavingsStore } from './savings.store';
 
 const SAVINGS_URL = '/api/v1/savings';
@@ -34,12 +33,7 @@ describe('SavingsStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: Configuration, useValue: new Configuration({ basePath: '' }) },
-      ],
+      providers: [provideZonelessChangeDetection(), ...provideBffApiTesting()],
     });
     store = TestBed.inject(SavingsStore);
     controller = TestBed.inject(HttpTestingController);

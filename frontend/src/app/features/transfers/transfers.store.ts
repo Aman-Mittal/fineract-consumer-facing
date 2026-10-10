@@ -23,18 +23,15 @@ import { Observable, tap } from 'rxjs';
 import {
   ConfirmTransferCommandRequest,
   InitiateTransferCommandRequest,
+  TRANSFER_API,
   TransferChallengeCommandData,
   TransferCommandData,
   TransferQueryData,
-  TransfersCommandControllerService,
-  TransfersQueryControllerService,
-} from '@bff/client';
-import { deviceFingerprint } from '../../core/auth/device-fingerprint';
+} from '../../core/adapters';
 
 @Injectable({ providedIn: 'root' })
 export class TransfersStore {
-  private readonly command = inject(TransfersCommandControllerService);
-  private readonly query = inject(TransfersQueryControllerService);
+  private readonly api = inject(TRANSFER_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly challenge = signal<TransferChallengeCommandData | null>(null);
@@ -47,16 +44,14 @@ export class TransfersStore {
   readonly historyLoading = signal(false);
 
   initiate(request: InitiateTransferCommandRequest): Observable<TransferChallengeCommandData> {
-    return this.command
-      .initiateTransfer(deviceFingerprint(), request)
-      .pipe(tap((challenge) => this.challenge.set(challenge)));
+    return this.api.initiate(request).pipe(tap((challenge) => this.challenge.set(challenge)));
   }
 
   confirm(
     idempotencyKey: string,
     request: ConfirmTransferCommandRequest,
   ): Observable<TransferCommandData> {
-    return this.command.confirmTransfer(deviceFingerprint(), idempotencyKey, request).pipe(
+    return this.api.confirm(idempotencyKey, request).pipe(
       tap((result) => {
         this.result.set(result);
         this.challenge.set(null);
@@ -67,16 +62,16 @@ export class TransfersStore {
   loadHistory(page: number, size: number): void {
     this.history.set([]);
     this.historyLoading.set(true);
-    this.query
-      .listTransfers(undefined, undefined, page, size)
+    this.api
+      .list(page, size)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
-          this.history.set(response.content ?? []);
-          this.historyPage.set(response.page ?? 0);
-          this.historySize.set(response.size ?? 0);
-          this.historyTotalElements.set(response.totalElements ?? 0);
-          this.historyTotalPages.set(response.totalPages ?? 0);
+        next: (result) => {
+          this.history.set(result.content);
+          this.historyPage.set(result.page);
+          this.historySize.set(result.size);
+          this.historyTotalElements.set(result.totalElements);
+          this.historyTotalPages.set(result.totalPages);
           this.historyLoading.set(false);
         },
         error: () => this.historyLoading.set(false),

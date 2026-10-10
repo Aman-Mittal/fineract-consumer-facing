@@ -20,17 +20,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, finalize, shareReplay, tap } from 'rxjs';
 import {
-  AuthenticationCommandControllerService,
+  AUTH_API,
   LoginChallengeCommandData,
   LoginCommandRequest,
   SessionCommandData,
   VerifyTwoFactorCommandRequest,
-} from '@bff/client';
-import { deviceFingerprint } from './device-fingerprint';
+} from '../adapters';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api = inject(AuthenticationCommandControllerService);
+  private readonly api = inject(AUTH_API);
 
   private readonly sessionExpiresAt = signal<string | null>(null);
   readonly isAuthenticated = computed(() => this.sessionExpiresAt() !== null);
@@ -38,18 +37,16 @@ export class AuthService {
   private refreshInFlight: Observable<SessionCommandData> | null = null;
 
   login(request: LoginCommandRequest): Observable<LoginChallengeCommandData> {
-    return this.api.login(deviceFingerprint(), request);
+    return this.api.login(request);
   }
 
   verifyTwoFactor(request: VerifyTwoFactorCommandRequest): Observable<SessionCommandData> {
-    return this.api
-      .verifyTwoFactor(deviceFingerprint(), request)
-      .pipe(tap((session) => this.adoptSession(session)));
+    return this.api.verifyTwoFactor(request).pipe(tap((session) => this.adoptSession(session)));
   }
 
   refresh(): Observable<SessionCommandData> {
     if (!this.refreshInFlight) {
-      this.refreshInFlight = this.api.refreshSession(deviceFingerprint()).pipe(
+      this.refreshInFlight = this.api.refreshSession().pipe(
         tap((session) => this.adoptSession(session)),
         finalize(() => (this.refreshInFlight = null)),
         shareReplay(1),

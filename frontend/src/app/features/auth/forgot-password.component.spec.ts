@@ -21,7 +21,8 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
-import { provideIonicAngular, ToastController } from '@ionic/angular/standalone';
+import { provideIonicAngular } from '@ionic/angular/standalone';
+import { OVERLAY } from '../../core/adapters';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
@@ -58,10 +59,7 @@ function createComponent(): ComponentFixture<ForgotPasswordComponent> {
       provideRouter([]),
       { provide: NotificationService, useValue: { showError } },
       { provide: ProfileStore, useValue: { forgotPassword, resetPassword } },
-      {
-        provide: ToastController,
-        useValue: { create: () => Promise.resolve({ present: vi.fn() }) },
-      },
+      { provide: OVERLAY, useValue: { toast: () => Promise.resolve() } },
     ],
   });
   vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);

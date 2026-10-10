@@ -18,7 +18,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { AuditEventCommandRequest, SubmitAuditEventsCommandRequest } from '@bff/client';
+import type { AuditEventCommandRequest, SubmitAuditEventsCommandRequest } from '../adapters';
 import { deviceFingerprint } from '../auth/device-fingerprint';
 import { generateCorrelationId } from '../interceptors/correlation-id.interceptor';
 

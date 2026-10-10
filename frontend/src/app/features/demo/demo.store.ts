@@ -19,11 +19,11 @@
 
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AuditEventQueryData, AuditQueryControllerService } from '@bff/client';
+import { AUDIT_API, AuditEventQueryData } from '../../core/adapters';
 
 @Injectable({ providedIn: 'root' })
 export class DemoStore {
-  private readonly query = inject(AuditQueryControllerService);
+  private readonly audit = inject(AUDIT_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly events = signal<AuditEventQueryData[]>([]);
@@ -32,8 +32,8 @@ export class DemoStore {
   loadEvents(page: number, size: number): void {
     this.events.set([]);
     this.loading.set(true);
-    this.query
-      .listAuditEvents(page, size)
+    this.audit
+      .listEvents(page, size)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (rows) => {

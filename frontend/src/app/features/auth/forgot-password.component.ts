@@ -30,8 +30,8 @@ import {
   IonCardTitle,
   IonInput,
   IonProgressBar,
-  ToastController,
 } from '@ionic/angular/standalone';
+import { OVERLAY } from '../../core/adapters';
 import { TranslatePipe } from '@ngx-translate/core';
 import { I18nService } from '../../core/i18n/i18n.service';
 import { NotificationService } from '../../core/notifications/notification.service';
@@ -129,7 +129,7 @@ export class ForgotPasswordComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly store = inject(ProfileStore);
   private readonly router = inject(Router);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly overlay = inject(OVERLAY);
   private readonly i18n = inject(I18nService);
   private readonly notifications = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
@@ -219,12 +219,12 @@ export class ForgotPasswordComponent {
   }
 
   private presentSuccessToast(): void {
-    this.toastCtrl
-      .create({
-        message: this.i18n.translate('auth.forgotPassword.success'),
-        duration: 5000,
-        buttons: [{ text: this.i18n.translate('common.action.dismiss'), role: 'cancel' }],
-      })
-      .then((toast) => toast.present());
+    // Ionic's default position, which this toast used before it moved behind OVERLAY.
+    void this.overlay.toast({
+      message: this.i18n.translate('auth.forgotPassword.success'),
+      duration: 5000,
+      position: 'bottom',
+      dismissLabel: this.i18n.translate('common.action.dismiss'),
+    });
   }
 }

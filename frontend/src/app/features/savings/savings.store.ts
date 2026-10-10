@@ -20,25 +20,19 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  SAVINGS_API,
   SavingsAccountListItemQueryData,
   SavingsAccountQueryData,
   SavingsApplicationTemplateQueryData,
   SavingsChargeQueryData,
-  SavingsQueryControllerService,
   SavingsTransactionQueryData,
-} from '@bff/client';
+  TransactionFilter,
+} from '../../core/adapters';
 import { byAccountNo } from '../../shared/utils/account-sort';
-
-export interface TransactionFilter {
-  fromDate?: string;
-  toDate?: string;
-  page?: number;
-  size?: number;
-}
 
 @Injectable({ providedIn: 'root' })
 export class SavingsStore {
-  private readonly query = inject(SavingsQueryControllerService);
+  private readonly api = inject(SAVINGS_API);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly accounts = signal<SavingsAccountListItemQueryData[]>([]);
@@ -56,8 +50,8 @@ export class SavingsStore {
   loadAccounts(): void {
     this.accounts.set([]);
     this.loading.set(true);
-    this.query
-      .listSavingsAccounts()
+    this.api
+      .list()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (rows) => {
@@ -71,8 +65,8 @@ export class SavingsStore {
   loadAccount(savingsId: number): void {
     this.selected.set(null);
     this.loading.set(true);
-    this.query
-      .getSavingsAccount(savingsId)
+    this.api
+      .get(savingsId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (account) => {
@@ -85,8 +79,8 @@ export class SavingsStore {
 
   loadCharges(savingsId: number): void {
     this.charges.set([]);
-    this.query
-      .getSavingsCharges(savingsId)
+    this.api
+      .listCharges(savingsId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (rows) => this.charges.set(rows),
@@ -97,22 +91,16 @@ export class SavingsStore {
   loadTransactions(savingsId: number, filter: TransactionFilter = {}): void {
     this.transactions.set([]);
     this.loading.set(true);
-    this.query
-      .searchSavingsTransactions(
-        savingsId,
-        filter.fromDate,
-        filter.toDate,
-        filter.page,
-        filter.size,
-      )
+    this.api
+      .searchTransactions(savingsId, filter)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response) => {
-          this.transactions.set(response.content ?? []);
-          this.transactionsPage.set(response.page ?? 0);
-          this.transactionsSize.set(response.size ?? 0);
-          this.transactionsTotalElements.set(response.totalElements ?? 0);
-          this.transactionsTotalPages.set(response.totalPages ?? 0);
+        next: (page) => {
+          this.transactions.set(page.content);
+          this.transactionsPage.set(page.page);
+          this.transactionsSize.set(page.size);
+          this.transactionsTotalElements.set(page.totalElements);
+          this.transactionsTotalPages.set(page.totalPages);
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
@@ -121,8 +109,8 @@ export class SavingsStore {
 
   loadTransaction(savingsId: number, transactionId: number): void {
     this.selectedTransaction.set(null);
-    this.query
-      .getSavingsTransaction(savingsId, transactionId)
+    this.api
+      .getTransaction(savingsId, transactionId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (tx) => this.selectedTransaction.set(tx),
@@ -132,8 +120,8 @@ export class SavingsStore {
 
   loadTemplate(productId?: number): void {
     this.template.set(null);
-    this.query
-      .getSavingsApplicationTemplate(productId)
+    this.api
+      .getApplicationTemplate(productId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (template) => this.template.set(template),

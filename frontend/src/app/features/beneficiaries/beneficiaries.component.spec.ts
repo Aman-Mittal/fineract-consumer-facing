@@ -20,10 +20,10 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
-import { provideIonicAngular, ToastController } from '@ionic/angular/standalone';
+import { provideIonicAngular } from '@ionic/angular/standalone';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { BeneficiaryQueryData } from '@bff/client';
+import { BeneficiaryQueryData, OVERLAY } from '../../core/adapters';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { BeneficiariesComponent } from './beneficiaries.component';
 import { BeneficiariesStore } from './beneficiaries.store';
@@ -74,10 +74,7 @@ function createComponent(): BeneficiariesInternals {
       provideIonicAngular({ mode: 'md' }),
       provideTranslateService(),
       { provide: NotificationService, useValue: { showError } },
-      {
-        provide: ToastController,
-        useValue: { create: () => Promise.resolve({ present: vi.fn() }) },
-      },
+      { provide: OVERLAY, useValue: { toast: () => Promise.resolve() } },
       {
         provide: BeneficiariesStore,
         useValue: {

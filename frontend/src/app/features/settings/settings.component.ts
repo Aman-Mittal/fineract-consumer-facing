@@ -29,7 +29,7 @@ import {
   IonCardTitle,
 } from '@ionic/angular/standalone';
 import { TranslatePipe } from '@ngx-translate/core';
-import { OpenBankingUserConsentQueryData } from '@bff/client';
+import { OpenBankingUserConsentQueryData } from '../../core/adapters';
 import { PageHeaderComponent } from '../../shared/ui/page-header.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
 import { ChangePasswordComponent } from './change-password.component';

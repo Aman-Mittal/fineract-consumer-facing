@@ -1,0 +1,87 @@
+[[adapter-boundary]]
+= Adapter Boundary
+
+The Angular client depends on two things it does not own: the TypeScript client generated from the BFF's OpenAPI document, and Ionic's imperative overlay controllers. Both are reached only through contracts in `src/app/core/adapters`, and lint fails if anything else imports them. The structure follows the adapter boundary of the Fineract back-office UI (apache/fineract-backoffice-ui), so the two Angular clients are organized the same way.
+
+== Why
+
+The generated client is regenerated whenever the BFF's contract or the generator version changes. Before this boundary, stores, core services and some components injected generated `*ControllerService` classes directly. Each of them also repeated transport details: the `X-Device-Fingerprint` argument, the loan `withdraw` command segment, and defaults for absent paging fields. A change in what the generator emits reached all of those files at once.
+
+With the boundary in place, that change lands in `core/adapters/api` and nowhere else. Stores and components see a small interface per domain that names the operations the app uses, and specs mock that interface rather than a generated class.
+
+Ionic's components (`<ion-*>`) are presentational and stay in templates. Its controllers (`ToastController` and the like) are singletons called from services and interceptors, and they are what a component-library upgrade breaks. They sit behind `OVERLAY` for the same reason.
+
+== Layout
+
+[source]
+----
+src/app/core/adapters/
+├── index.ts                        # the barrel application code imports from
+├── overlay/
+│   ├── overlay.adapter.ts          # OverlayAdapter contract + OVERLAY token
+│   └── ionic-overlay.adapter.ts    # default implementation (ToastController)
+└── api/
+    ├── page.ts                     # Page<T>, TransactionFilter
+    ├── bff-page.ts                 # mapPage(): paging envelope -> Page<T>
+    ├── <domain>.api.ts             # port: model types, XxxApi interface, XXX_API token
+    └── bff-<domain>.api.ts         # adapter: BffXxxApi over the generated services
+----
+
+The domains are `audit`, `auth`, `beneficiary`, `consent`, `loan`, `registration`, `savings`, `summary`, `transfer` and `user`. A port groups the operations a feature needs, not one per generated service. For example, `LoanApi.listObligees()` is served by the user query controller because the loans screens are what use it.
+
+== The pattern
+
+A port declares the contract and binds a default implementation through its token:
+
+[source,typescript]
+----
+export interface SavingsApi {
+  list(): Observable<SavingsAccountListItemQueryData[]>;
+  searchTransactions(savingsId: number, filter: TransactionFilter): Observable<Page<SavingsTransactionQueryData>>;
+  // ...
+}
+
+export const SAVINGS_API = new InjectionToken<SavingsApi>('SavingsApi', {
+  providedIn: 'root',
+  factory: () => inject(BffSavingsApi),
+});
+----
+
+The adapter implements it on top of the generated client. It imports the port with `import type` so the two files do not form a runtime cycle:
+
+[source,typescript]
+----
+@Injectable({ providedIn: 'root' })
+export class BffSavingsApi implements SavingsApi {
+  private readonly query = inject(SavingsQueryControllerService);
+
+  searchTransactions(savingsId: number, filter: TransactionFilter) {
+    return this.query
+      .searchSavingsTransactions(savingsId, filter.fromDate, filter.toDate, filter.page, filter.size)
+      .pipe(map((response) => mapPage(response)));
+  }
+}
+----
+
+Stores inject the token (`inject(SAVINGS_API)`) and import types from `core/adapters`. Nothing is registered in `app.config.ts`, because each token carries its default. A deployment or a TestBed that wants a different implementation provides the token, and that provider takes precedence.
+
+== Rules
+
+. *Only the adapters import the generated client.* The local ESLint rule `local/no-generated-api-import` reports `@bff/client`, any subpath of it, and any relative path into `src/openapi-client`. The allowed files are `core/adapters/api/**`, `app.config.ts` (which configures the client's base path) and `testing/bff-api-testing.ts`. The rule is tested in `eslint-rules/no-generated-api-import.test.js`.
+. *Only the overlay adapter imports Ionic's controllers.* `no-restricted-imports` reports `ToastController`, `ModalController`, `AlertController` and the other Ionic controllers outside `core/adapters/overlay`. `OverlayAdapter` covers toasts only, because nothing else is used yet. Add modals to the contract when a screen needs one.
+. *Transport details stay in the adapter.* This covers the device-fingerprint argument, path segments that name a command, and defaults for fields the BFF may omit (`mapPage`, `mapUserCharges`, `mapAccountsSummary`). Stores no longer import `deviceFingerprint()`.
+. *Specs are not exempt.* A component spec mocks the store or the port. A store spec drives the real adapters against `HttpTestingController`: it gets the client's configuration from `provideBffApiTesting()` and asserts the URLs and bodies the BFF receives. Adapter specs test the mappers directly (`bff-mappers.spec.ts`) and the Ionic translation (`ionic-overlay.adapter.spec.ts`).
+
+== Models
+
+Here the ports re-export the BFF's DTO types under their generated names. The back-office UI instead requires a hand-written model per domain, and the difference is deliberate. The back-office's generated client describes Fineract Core, whose response shapes that project does not control. The BFF *is* this project's anti-corruption layer: its DTOs are already named and shaped for the consumer app, and they are owned in this repository. Re-exporting them keeps one seam without duplicating the BFF's contract by hand.
+
+Where a screen needs a different shape, the port declares its own model and the adapter maps to it. `SummaryApi` returns `SavingsCard` and `LoanCard`; `Page<T>` and `UserChargesPage` replace envelopes whose fields are all optional. A re-exported type becomes a hand-written interface the same way: the port switches from re-export to declaration, the adapter gains a mapper, and features do not change.
+
+The two consent and registration types with status constants (`OpenBankingUserConsentQueryData`, `VerifyOtpCommandData`) are re-exported as values, because the generator emits those constants as a namespace beside the interface.
+
+== What is not adapted
+
+* *Audit event submission.* `AuditService` posts batches with `fetch` and `keepalive`, so a batch still reaches the BFF when the page is closing. Neither `HttpClient` nor the generated client can do that, so the service keeps its own `fetch` and imports only the request types from `core/adapters`.
+* *Translations.* ngx-translate is still imported directly by about 26 files, through `TranslatePipe` in templates and `I18nService` in code. The back-office UI wraps it in an `I18N` adapter with its own pipe. Doing the same here is a separate change, because it touches every template.
+* *Ionic components, RxJS and Angular itself.* These are the framework the app is written in, not dependencies worth isolating.
