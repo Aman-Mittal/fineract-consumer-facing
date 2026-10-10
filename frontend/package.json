@@ -25,7 +25,8 @@
     "e2e:stack:run": "npm run e2e:docker:up && npm run e2e && npm run e2e:docker:down",
     "e2e:stack:coverage": "FRONTEND_BUILD_CONFIG=development npm run e2e:docker:up && PW_COVERAGE=1 npm run e2e && npm run e2e:docker:down",
     "coverage:report": "lcov-result-merger 'coverage/{unit,e2e}/lcov.info' coverage/combined/lcov.info && lcov-total coverage/combined/lcov.info",
-    "lint": "ng lint",
+    "lint": "eslint src --suppressions-location eslint-suppressions.json",
+    "lint:prune": "eslint src --suppressions-location eslint-suppressions.json --prune-suppressions",
     "test:eslint-rules": "node --test \"eslint-rules/*.test.js\"",
     "format": "prettier --write src",
     "format:check": "prettier --check src"

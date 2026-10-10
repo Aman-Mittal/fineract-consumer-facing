@@ -1,7 +1,7 @@
 [[adapter-boundary]]
 = Adapter Boundary
 
-The Angular client depends on two things it does not own: the TypeScript client generated from the BFF's OpenAPI document, and Ionic's imperative overlay controllers. Both are reached only through contracts in `src/app/core/adapters`, and lint fails if anything else imports them. The structure follows the adapter boundary of the Fineract back-office UI (apache/fineract-backoffice-ui), so the two Angular clients are organized the same way.
+The Angular client depends on things it does not own: the TypeScript client generated from the BFF's OpenAPI document, Ionic's imperative overlay controllers, the ngx-translate library and the browser's Web Storage. Each is reached through a contract in `src/app/core/adapters`, and lint fails if new code reaches past one. Code written before the I18N and STORAGE adapters existed is listed in a suppressions baseline that may only shrink (see <<ratchet>>). The structure follows the adapter boundary of the Fineract back-office UI (apache/fineract-backoffice-ui), so the two Angular clients are organized the same way.
 
 == Why
 
@@ -11,15 +11,25 @@ With the boundary in place, that change lands in `core/adapters/api` and nowhere
 
 Ionic's components (`<ion-*>`) are presentational and stay in templates. Its controllers (`ToastController` and the like) are singletons called from services and interceptors, and they are what a component-library upgrade breaks. They sit behind `OVERLAY` for the same reason.
 
+ngx-translate is imported by most components, through its `| translate` pipe, so a major-version upgrade or a move to Angular's own `$localize` would touch all of them. `I18N` and the `| appTranslate` pipe give templates and services one seam instead. `STORAGE` does the same for `localStorage` and `sessionStorage`: it keeps the set of persisted keys in one reviewable list (`storage-keys.ts`), and its reads and writes never throw, which Web Storage does in private browsing and under browser policies that deny storage.
+
 == Layout
 
 [source]
 ----
 src/app/core/adapters/
 ├── index.ts                        # the barrel application code imports from
+├── i18n/
+│   ├── i18n.adapter.ts             # I18nAdapter contract + I18N token
+│   ├── ngx-translate-i18n.adapter.ts  # default implementation (ngx-translate)
+│   └── translate.pipe.ts           # the | appTranslate pipe
 ├── overlay/
 │   ├── overlay.adapter.ts          # OverlayAdapter contract + OVERLAY token
 │   └── ionic-overlay.adapter.ts    # default implementation (ToastController)
+├── storage/
+│   ├── storage-keys.ts             # every key the app persists
+│   ├── storage.adapter.ts          # StorageAdapter contract + STORAGE token
+│   └── web-storage.adapter.ts      # default implementation (local/sessionStorage)
 └── api/
     ├── page.ts                     # Page<T>, TransactionFilter
     ├── bff-page.ts                 # mapPage(): paging envelope -> Page<T>
@@ -69,6 +79,8 @@ Stores inject the token (`inject(SAVINGS_API)`) and import types from `core/adap
 
 . *Only the adapters import the generated client.* The local ESLint rule `local/no-generated-api-import` reports `@bff/client`, any subpath of it, and any relative path into `src/openapi-client`. The allowed files are `core/adapters/api/**`, `app.config.ts` (which configures the client's base path) and `testing/bff-api-testing.ts`. The rule is tested in `eslint-rules/no-generated-api-import.test.js`.
 . *Only the overlay adapter imports Ionic's controllers.* `no-restricted-imports` reports `ToastController`, `ModalController`, `AlertController` and the other Ionic controllers outside `core/adapters/overlay`. `OverlayAdapter` covers toasts only, because nothing else is used yet. Add modals to the contract when a screen needs one.
+. *Only the I18N adapter imports ngx-translate.* The local rule `local/no-i18n-library-import` reports `@ngx-translate/core` and `@ngx-translate/http-loader` outside `core/adapters/i18n`, `app.config.ts` (which configures the loader) and `testing/i18n-testing.ts`. Templates use `| appTranslate` (the same name as in the back-office UI) and code injects `I18N`. Specs call `provideI18nTesting()`, and `setTestTranslations()` when they need a catalogue. A rule of its own rather than another `no-restricted-imports` entry, so its suppression count cannot be traded against another boundary's.
+. *Only the STORAGE adapter touches Web Storage.* `no-restricted-globals` reports `localStorage` and `sessionStorage` outside `core/adapters/storage`. A new key is added to `STORAGE_KEYS` first; the stored names are unchanged from before the adapter, so values already in users' browsers are still found.
 . *Transport details stay in the adapter.* This covers the device-fingerprint argument, path segments that name a command, and defaults for fields the BFF may omit (`mapPage`, `mapUserCharges`, `mapAccountsSummary`). Stores no longer import `deviceFingerprint()`.
 . *Specs are not exempt.* A component spec mocks the store or the port. A store spec drives the real adapters against `HttpTestingController`: it gets the client's configuration from `provideBffApiTesting()` and asserts the URLs and bodies the BFF receives. Adapter specs test the mappers directly (`bff-mappers.spec.ts`) and the Ionic translation (`ionic-overlay.adapter.spec.ts`).
 
@@ -83,5 +95,17 @@ The two consent and registration types with status constants (`OpenBankingUserCo
 == What is not adapted
 
 * *Audit event submission.* `AuditService` posts batches with `fetch` and `keepalive`, so a batch still reaches the BFF when the page is closing. Neither `HttpClient` nor the generated client can do that, so the service keeps its own `fetch` and imports only the request types from `core/adapters`.
-* *Translations.* ngx-translate is still imported directly by about 26 files, through `TranslatePipe` in templates and `I18nService` in code. The back-office UI wraps it in an `I18N` adapter with its own pipe. Doing the same here is a separate change, because it touches every template.
 * *Ionic components, RxJS and Angular itself.* These are the framework the app is written in, not dependencies worth isolating.
+
+[[ratchet]]
+== The suppressions baseline
+
+When the I18N and STORAGE boundaries were added, 34 files already imported ngx-translate or used Web Storage directly. Migrating all of them at once would have touched every template, so they are recorded in `frontend/eslint-suppressions.json` instead, using ESLint's bulk suppressions. The file counts violations per file and per rule:
+
+* `npm run lint` (`eslint src --suppressions-location eslint-suppressions.json`) passes as long as no file has more violations than recorded. A new import of ngx-translate, or a new use of `localStorage`, anywhere fails the build.
+* Migrating a file leaves its entry unused, and lint then fails until `npm run lint:prune` removes it. The baseline can therefore only shrink, and a pull request that migrates a file shows the shrinking entry in its diff.
+* The file is generated. Do not edit it by hand, and never add to it to get a build passing; fix the violation instead.
+
+Migrating a component means swapping the `TranslatePipe` import from `@ngx-translate/core` for the one from `core/adapters`, renaming `| translate` to `| appTranslate` in its template, switching its spec from `provideTranslateService()` to `provideI18nTesting()`, then running `npm run lint:prune`. The remaining work is tracked in issue #172, one sub-issue per area.
+
+`ng lint` does not read the suppressions file; use `npm run lint`.

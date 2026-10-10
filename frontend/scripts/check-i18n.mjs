@@ -159,7 +159,7 @@ function main() {
   if (violations.length > 0) {
     console.error('i18n check failed — hardcoded user-facing text found:\n');
     for (const v of violations) console.error('  ' + v);
-    console.error(`\n${violations.length} violation(s). Use the translate pipe, or add a legitimate exception to an allowlist in scripts/check-i18n.mjs.`);
+    console.error(`\n${violations.length} violation(s). Use the appTranslate pipe (or, until a file is migrated, translate), or add a legitimate exception to an allowlist in scripts/check-i18n.mjs.`);
     process.exit(1);
   }
 

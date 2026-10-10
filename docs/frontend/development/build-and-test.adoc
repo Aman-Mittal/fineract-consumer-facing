@@ -15,7 +15,8 @@ Every script in `frontend/package.json`:
 | `build` | `ng build`: a production build into `dist/frontend/browser`.
 | `watch` | `ng build --watch --configuration development`: rebuilds on file change without serving.
 | `test` | `ng test`: Vitest unit tests through the Angular CLI.
-| `lint` | `ng lint`: ESLint over `src/**/*.ts` and `src/**/*.html`.
+| `lint` | ESLint over `src/` (TypeScript and templates), honouring the suppressions baseline in `eslint-suppressions.json`.
+| `lint:prune` | The same, removing baseline entries that no longer occur. Run it after migrating a file to the I18N or STORAGE adapter.
 | `test:eslint-rules` | `node --test`: the tests of the local ESLint rules in `eslint-rules/`.
 | `format` | Prettier, rewriting files under `src/` in place.
 | `format:check` | Prettier in check-only mode; fails if any file would change.
@@ -101,7 +102,7 @@ npm run generate:client
 
 == Lint, format, and i18n check
 
-`npm run lint` runs angular-eslint over all TypeScript and templates under `src/`. `npm run format` and `npm run format:check` apply Prettier with the settings embedded in `package.json` (100-character lines, single quotes, the Angular parser for HTML). `npm run i18n:check` parses every component template under `src/app` and fails the build if it finds hardcoded user-facing text, meaning literal text nodes or attributes such as `title`, `placeholder`, and `aria-label`. All copy must therefore resolve through the translation pipe or be added to the script's allowlist. CI runs `lint` and `format:check` in the `prettier-eslint.yaml` workflow and `i18n:check` in the `i18n-check.yml` workflow (see the continuous-integration section of `docs/consumer/development/build-and-test.adoc`).
+`npm run lint` runs ESLint over all TypeScript and templates under `src/`, with the suppressions baseline described in the adapter-boundary architecture page; `ng lint` does not read that baseline. `npm run format` and `npm run format:check` apply Prettier with the settings embedded in `package.json` (100-character lines, single quotes, the Angular parser for HTML). `npm run i18n:check` parses every component template under `src/app` and fails the build if it finds hardcoded user-facing text, meaning literal text nodes or attributes such as `title`, `placeholder`, and `aria-label`. All copy must therefore resolve through the translation pipe or be added to the script's allowlist. CI runs `lint` and `format:check` in the `prettier-eslint.yaml` workflow and `i18n:check` in the `i18n-check.yml` workflow (see the continuous-integration section of `docs/consumer/development/build-and-test.adoc`).
 
 === Static analysis rules
 
